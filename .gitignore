@@ -1,0 +1,11 @@
+resource/*
+VOC2011/*
+image/*
+models/*
+
+*.pdf
+*.png
+*.pyc
+
+.DS_Store
+log
