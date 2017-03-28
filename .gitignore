@@ -9,6 +9,7 @@ reference/*
 *.png
 *.pyc
 *.npy
+*.caffemodel
 
 .DS_Store
 log
