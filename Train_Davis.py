@@ -38,7 +38,9 @@ def main(argv):
 	# Define loss and optimizer
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
-    train_step = tf.train.GradientDescentOptimizer(LR).minimize(cross_entropy)
+    #train_step = tf.train.GradientDescentOptimizer(LR).minimize(cross_entropy)
+    train_step = tf.train.MomentumOptimizer(learning_rate=LR, 
+                                            momentum=MOMENTUM).minimize(cross_entropy)
 
     # Session Define
     init = tf.global_variables_initializer()

@@ -23,6 +23,9 @@ MAX_ITER = 0
 # learning rate
 LR = 1e-3
 
+# momentum
+MOMEMTUM = 0.9
+
 INIT_PADDING = 100
 HEIGHT = 0
 WIDTH = 0
