@@ -2,10 +2,13 @@ resource/*
 VOC2011/*
 image/*
 models/*
+dataset/*
+reference/*
 
 *.pdf
 *.png
 *.pyc
+*.npy
 
 .DS_Store
 log

@@ -31,7 +31,7 @@ class FCN16VGG:
             sys.exit(1)
 
         self.data_dict = np.load(vgg16_npy_path, encoding='latin1').item()
-        self.wd = 5e-4
+        self.wd = WEIGHT_DECAY
         print("npy file loaded")
 
     def build(self, rgb, train=False, num_classes=20, random_init_fc8=False,
@@ -135,6 +135,8 @@ class FCN16VGG:
                                              ksize=32, stride=16)
 		
         self.pred_up = tf.argmax(self.upscore32, dimension=3)
+        
+        return self.upscore32
 		
     def _max_pool(self, bottom, name, debug):
         pool = tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
