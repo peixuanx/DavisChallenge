@@ -58,14 +58,16 @@ class FCN16VGG:
                              summarize=4, first_n=1)
         with tf.name_scope('Processing'):
             # rgb = tf.image.convert_image_dtype(rgb, tf.float32)
-            red, green, blue = tf.split(rgb, 3, 3)
+            red, green, blue, mask = tf.split(rgb, 4, 3)
+            #mask = red
             # assert red.get_shape().as_list()[1:] == [224, 224, 1]
             # assert green.get_shape().as_list()[1:] == [224, 224, 1]
             # assert blue.get_shape().as_list()[1:] == [224, 224, 1]
             bgr = tf.concat([
                 blue - VGG_MEAN[0],
                 green - VGG_MEAN[1],
-                red - VGG_MEAN[2]], axis=3)
+                red - VGG_MEAN[2],
+                mask], axis=3)
 
             if debug:
                 bgr = tf.Print(bgr, [tf.shape(bgr)],
@@ -267,6 +269,16 @@ class FCN16VGG:
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
+        var = tf.get_variable(name="filter", initializer=init, shape=shape)
+        if name == 'conv1_1':
+            init_mask = tf.truncated_normal_initializer(stddev=5e-2, 
+                                                        dtype=tf.float32)
+            shape_mask = [shape[0],shape[1], 1, shape[3]]
+            var_mask = tf.get_variable(name="filter", initializer=init_mask,
+                                        shape=shape_mask) 
+            var = tf.concat([var, var_mask], axis=2)
+            shape = shape+np.array([0, 0, 1, 0])   
+
         print('Layer name: %s' % name)
         print('Layer shape: %s' % str(shape))
         var = tf.get_variable(name="filter", initializer=init, shape=shape)
