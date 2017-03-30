@@ -6,25 +6,27 @@ IMAGE_SIZE = 424
 DIM = IMAGE_SIZE*IMAGE_SIZE
 '''
 # model index
-MODEL_INDEX = 11
+MODEL_INDEX = 1
 
 # patchwise batch size
 BATCH_SIZE = 10
 
 # number of classes
-NUM_CLASSES = 21
+NUM_CLASSES = 2
 
 # weight regularization 
 WEIGHT_DECAY = 5e-4
 
 # maximum iteration number
-MAX_ITER = 0
-MAX_ITER_TEST = 500 
+MAX_ITER = 10
 
 # learning rate
-LR = 1e-6
+LR = 1e-3
 
-INIT_PADDING = 100
+# momentum
+MOMENTUM = 0.9
+
+INIT_PADDING = 0
 HEIGHT = 0
 WIDTH = 0
 
