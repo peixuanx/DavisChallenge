@@ -59,35 +59,28 @@ class Data_Distor:
             pLift[:,3:] = R
             return pLift
 
-        ratio = 0.05
+        ratio = 0.1
         for i in range(2):
             # source control points
-            b = np.random.randint(0,4,size=5)
-            xs = np.zeros(b.shape)
-            xs[b==0] = self.bbox[0] #+ np.random.uniform(-0.1*self.width, 0.1*self.width, size=xs[b==0].size)
-            xs[b==1] = self.bbox[1] #+ np.random.uniform(-0.1*self.width, 0.1*self.width, size=xs[b==1].size)
-            xs[b>1]  = np.random.uniform(self.bbox[0],self.bbox[1],size=xs[b>1].size)#self.bbox[0] + np.random.uniform(-0.1*self.width, 1.1*self.width, size=xs[b>1].size)
-            ys = np.zeros(b.shape)
-            ys[b==2] = self.bbox[2] #+ np.random.uniform(-0.1*self.height, 0.1*self.height, size=ys[b==2].size)
-            ys[b==3] = self.bbox[3] #+ np.random.uniform(-0.1*self.height, 0.1*self.height, size=ys[b==3].size)
-            ys[b<2]  = np.random.uniform(self.bbox[2],self.bbox[3],size=xs[b<2].size)#self.bbox[2] + np.random.uniform(-0.1*self.height, 1.1*self.height, size=ys[b<2].size)
+            #b = np.random.randint(0,4,size=5)
+            #xs = np.zeros(b.shape)
+            #xs[b==0] = self.bbox[0] #+ np.random.uniform(-0.1*self.width, 0.1*self.width, size=xs[b==0].size)
+            #xs[b==1] = self.bbox[1] #+ np.random.uniform(-0.1*self.width, 0.1*self.width, size=xs[b==1].size)
+            #xs[b>1]  = np.random.uniform(self.bbox[0],self.bbox[1],size=xs[b>1].size)#self.bbox[0] + np.random.uniform(-0.1*self.width, 1.1*self.width, size=xs[b>1].size)
+            #ys = np.zeros(b.shape)
+            #ys[b==2] = self.bbox[2] #+ np.random.uniform(-0.1*self.height, 0.1*self.height, size=ys[b==2].size)
+            #ys[b==3] = self.bbox[3] #+ np.random.uniform(-0.1*self.height, 0.1*self.height, size=ys[b==3].size)
+            #ys[b<2]  = np.random.uniform(self.bbox[2],self.bbox[3],size=xs[b<2].size)#self.bbox[2] + np.random.uniform(-0.1*self.height, 1.1*self.height, size=ys[b<2].size)
+            xs = np.array([self.bbox[0],self.bbox[1],self.bbox[0],self.bbox[1],(self.bbox[0]+self.bbox[1])/2])
+            ys = np.array([self.bbox[2],self.bbox[2],self.bbox[3],self.bbox[3],(self.bbox[2]+self.bbox[3])/2])
             cps = np.vstack([xs, ys]).T
 
             # target control points
-            xt = np.random.uniform(-ratio*self.width, ratio*self.width, size=b.size)
-            xt[b==0] += self.bbox[0]
-            xt[b==1] += self.bbox[1]
-            xt[b>1]  += xs[b>1]
-            yt = np.random.uniform(-ratio*self.height, ratio*self.height, size=b.size)
-            yt[b==2] += self.bbox[2]
-            yt[b==3] += self.bbox[3]
-            yt[b<2]  += ys[b<2]
-            print(self.bbox)
-            print(b)
-            print(xs)
-            print(ys)
-            print(xt)
-            print(yt)
+            xt = np.random.uniform(-ratio*self.width, ratio*self.width, size=5)
+            xt += xs
+            yt = np.random.uniform(-ratio*self.height, ratio*self.height, size=5)
+            yt += ys
+            
             # construct T
             T = makeT(cps)
 
@@ -115,7 +108,7 @@ class Data_Distor:
 
     def genMasks(self):
         self.affine()
-        #self.non_rigid()
-        #for i in range(2):
-        #    self.masks[i] = binary_dilation(self.masks[i],iterations=5)
-        return self.affineMasks
+        self.non_rigid()
+        for i in range(2):
+            self.masks[i] = binary_dilation(self.masks[i],iterations=5)
+        return self.masks
