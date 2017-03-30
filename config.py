@@ -9,7 +9,7 @@ DIM = IMAGE_SIZE*IMAGE_SIZE
 MODEL_INDEX = 11
 
 # patchwise batch size
-BATCH_SIZE = 1
+BATCH_SIZE = 10
 
 # number of classes
 NUM_CLASSES = 21
@@ -27,3 +27,11 @@ LR = 1e-6
 INIT_PADDING = 100
 HEIGHT = 0
 WIDTH = 0
+
+
+# reader
+ROTATE_NUM = 10
+CROP_WIDTH = 100
+CROP_HEIGHT = 100
+CROP_WIDTH_NUM = 3
+CROP_HEIGHT_NUM = 3
