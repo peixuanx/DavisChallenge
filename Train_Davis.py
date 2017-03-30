@@ -7,8 +7,8 @@ import numpy as np
 import argparse
 import sys, os
 
-import Davis
-import Read_Davis
+import Davis_FCN
+#import Read_Davis_t
 import scipy.misc
 
 from config import *
@@ -26,10 +26,10 @@ def main(argv):
     logs = open('./log', 'a+')
 
     # import data
-    #pascal_reader = read_pascal.PascalReader()
-
+    #pascal_reader = Read_Davis_t.PascalReader()
+    
     # Create the model
-    fcn = Davis.FCN16VGG() 
+    fcn = Davis_FCN.FCN() 
     x = tf.placeholder(tf.float32) #shape=[batch size, dimemsionality] 
     y_ = tf.placeholder(tf.float32)
     y = fcn.build(x, train=True, num_classes=NUM_CLASSES, 
@@ -38,19 +38,21 @@ def main(argv):
 	# Define loss and optimizer
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
+    #cross_entropy = tf.reduce_sum(cross_entropy)
     #train_step = tf.train.GradientDescentOptimizer(LR).minimize(cross_entropy)
-    train_step = tf.train.MomentumOptimizer(learning_rate=LR, 
-                                            momentum=MOMENTUM).minimize(cross_entropy)
+    train_step = tf.train.MomentumOptimizer(learning_rate=LR, momentum=MOMENTUM)
+    train_step = train_step.minimize(cross_entropy)
 
     # Session Define
-    init = tf.global_variables_initializer()
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
                                             log_device_placement=False))
-    sess.run(init)
     saver = tf.train.Saver()
     if file_index != 0:
-        saver.restore(sess, "./models/model%s.ckpt"%MODEL_INDEX)
+        saver.restore(sess, "./models/model%s"%MODEL_INDEX)
         print("Model restored ...")
+    
+    init = tf.global_variables_initializer()
+    sess.run(init)
     
     # Training
     print('='*40)
@@ -59,14 +61,14 @@ def main(argv):
     for i in range(MAX_ITER):
         batch_xs, batch_ys, filename = pascal_reader.next_batch(BATCH_SIZE)
         _, loss_val = sess.run([train_step,cross_entropy], feed_dict={x: batch_xs, y_: batch_ys})
-        save_path = saver.save(sess, "./models/model%s.ckpt"%MODEL_INDEX)      
+        save_path = saver.save(sess, "./models/model%s"%MODEL_INDEX)      
         loss.append(loss_val)
         f.write(str(file_index+i+1)+'\n')
         log = 'Iteration: %s'%str(i) + ' | Filename: %s'%filename + \
                 ' | Model saved in file: %s'%save_path + ' | Cross entropy loss: %s'%str(loss_val)
         logs.write(log+'\n')
         print(log)
-    log.close()
+    logs.close()
     f.close()
     np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
 

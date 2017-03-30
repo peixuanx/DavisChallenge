@@ -9,7 +9,7 @@ DIM = IMAGE_SIZE*IMAGE_SIZE
 MODEL_INDEX = 1
 
 # patchwise batch size
-BATCH_SIZE = 10
+BATCH_SIZE = 1
 
 # number of classes
 NUM_CLASSES = 2
@@ -18,14 +18,14 @@ NUM_CLASSES = 2
 WEIGHT_DECAY = 5e-4
 
 # maximum iteration number
-MAX_ITER = 0
+MAX_ITER = 10
 
 # learning rate
 LR = 1e-3
 
 # momentum
-MOMEMTUM = 0.9
+MOMENTUM = 0.9
 
-INIT_PADDING = 100
+INIT_PADDING = 0
 HEIGHT = 0
 WIDTH = 0

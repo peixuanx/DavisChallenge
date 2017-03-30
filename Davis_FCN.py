@@ -13,7 +13,7 @@ import tensorflow as tf
 from config import * 
 VGG_MEAN = [103.939, 116.779, 123.68]
 
-# FCN-16s
+# FCN-8s
 class FCN:
 
     def __init__(self, vgg16_npy_path=None):
@@ -95,7 +95,6 @@ class FCN:
 
         self.conv5_1 = self._conv_layer(self.pool4, "conv5_1")
         self.conv5_2 = self._conv_layer(self.conv5_1, "conv5_2")
-
         self.conv5_3 = self._conv_layer(self.conv5_2, "conv5_3")
         self.pool5 = self._max_pool(self.conv5_3, 'pool5', debug)
 
@@ -103,7 +102,7 @@ class FCN:
 
         if train:
             self.fc6 = tf.nn.dropout(self.fc6, 0.5)
-
+        
         self.fc7 = self._fc_layer(self.fc6, "fc7")
         if train:
             self.fc7 = tf.nn.dropout(self.fc7, 0.5)
@@ -129,15 +128,28 @@ class FCN:
 
         self.fuse_pool4 = tf.add(self.upscore2, self.score_pool4)
 
-        self.upscore32 = self._upscore_layer(self.fuse_pool4,
+        self.upscore4 = self._upscore_layer(self.fuse_pool4,
+                                            shape=tf.shape(self.pool3),
+                                            num_classes=num_classes,
+                                            debug=debug, name='upscore4',
+                                            ksize=4, stride=2)
+
+        self.score_pool3 = self._score_layer(self.pool3, "score_pool3",
+                                             num_classes=num_classes)
+        self.fuse_pool3 = tf.add(self.upscore4, self.score_pool3)
+
+        self.upscore32 = self._upscore_layer(self.fuse_pool3,
                                              shape=tf.shape(bgr),
                                              num_classes=num_classes,
                                              debug=debug, name='upscore32',
-                                             ksize=32, stride=16)
-		
-        self.pred_up = tf.argmax(self.upscore32, dimension=3)
+                                             ksize=16, stride=8)
         
-        return self.upscore32
+        self.pred_up = tf.argmax(self.upscore32, dimension=3)
+       
+        with tf.variable_scope('score') as scope:
+            self.score = tf.nn.softmax(self.upscore32)
+
+        return self.score 
 		
     def _max_pool(self, bottom, name, debug):
         pool = tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
@@ -175,6 +187,9 @@ class FCN:
                                                   num_classes=num_classes)
             else:
                 filt = self.get_fc_weight_reshape(name, [1, 1, 4096, 4096])
+            
+            self._add_wd_and_summary(filt, self.wd, "fc_wlosses")
+            
             conv = tf.nn.conv2d(bottom, filt, [1, 1, 1, 1], padding='SAME')
             conv_biases = self.get_bias(name, num_classes=num_classes)
             bias = tf.nn.bias_add(conv, conv_biases)
@@ -200,9 +215,13 @@ class FCN:
                 stddev = (2 / num_input)**0.5
             elif name == "score_pool4":
                 stddev = 0.001
+            elif name == "score_pool3":
+                stddev = 0.001
             # Apply convolution
             w_decay = self.wd
-            weights = self._variable_with_weight_decay(shape, stddev, w_decay)
+
+            weights = self._variable_with_weight_decay(shape, stddev, w_decay,
+                                                        decoder=True)
             conv = tf.nn.conv2d(bottom, weights, [1, 1, 1, 1], padding='SAME')
             # Apply bias
             conv_biases = self._bias_variable([num_classes], constant=0.0)
@@ -238,6 +257,7 @@ class FCN:
             stddev = (2 / num_input)**0.5
 
             weights = self.get_deconv_filter(f_shape)
+            self._add_wd_and_summary(weights, self.wd, "fc_wlosses")
             deconv = tf.nn.conv2d_transpose(bottom, weights, output_shape,
                                             strides=strides, padding='SAME')
 
@@ -265,8 +285,9 @@ class FCN:
 
         init = tf.constant_initializer(value=weights,
                                        dtype=tf.float32)
-        return tf.get_variable(name="up_filter", initializer=init,
+        var = tf.get_variable(name="up_filter", initializer=init,
                                shape=weights.shape)
+        return var
 
     def get_conv_filter(self, name):
         init = tf.constant_initializer(value=self.data_dict[name][0],
@@ -289,6 +310,7 @@ class FCN:
                                        name='weight_loss')
             tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES,
                                  weight_decay)
+        _variable_summaries(var)
         return var
 
     def get_bias(self, name, num_classes=None):
@@ -300,7 +322,9 @@ class FCN:
             shape = [num_classes]
         init = tf.constant_initializer(value=bias_wights,
                                        dtype=tf.float32)
-        return tf.get_variable(name="biases", initializer=init, shape=shape)
+        var = tf.get_variable(name="biases", initializer=init, shape=shape)
+        _variable_summaries(var)
+        return var
 
     def get_fc_weight(self, name):
         init = tf.constant_initializer(value=self.data_dict[name][0],
@@ -312,6 +336,7 @@ class FCN:
                                        name='weight_loss')
             tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES,
                                  weight_decay)
+        _variable_summaries(var)
         return var
 
     def _bias_reshape(self, bweight, num_orig, num_new):
@@ -365,7 +390,7 @@ class FCN:
                 fweight[:, :, :, start_idx:end_idx], axis=3)
         return avg_fweight
 
-    def _variable_with_weight_decay(self, shape, stddev, wd):
+    def _variable_with_weight_decay(self, shape, stddev, wd, decoder=False):
         """Helper to create an initialized Variable with weight decay.
 
         Note that the Variable is initialized with a truncated normal
@@ -386,18 +411,30 @@ class FCN:
         initializer = tf.truncated_normal_initializer(stddev=stddev)
         var = tf.get_variable('weights', shape=shape,
                               initializer=initializer)
-
         if wd and (not tf.get_variable_scope().reuse):
             weight_decay = tf.multiply(
                 tf.nn.l2_loss(var), wd, name='weight_loss')
             tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES,
                                  weight_decay)
+        _variable_summaries(var)
+        return var
+
+    def _add_wd_and_summary(self, var, wd, collection_name=None):
+        if collection_name is None:
+            collection_name = tf.GraphKeys.REGULARIZATION_LOSSES
+        if wd and (not tf.get_variable_scope().reuse):
+            weight_decay = tf.multiply(
+                tf.nn.l2_loss(var), wd, name='weight_loss')
+            tf.add_to_collection(collection_name, weight_decay)
+        _variable_summaries(var)
         return var
 
     def _bias_variable(self, shape, constant=0.0):
-        initializer = tf.constant_initializer(constant)
-        return tf.get_variable(name='biases', shape=shape,
-                               initializer=initializer)
+        initializer = tf.constant_initializer(constant) 
+        var = tf.get_variable(name='biases', shape=shape,
+                                initializer=initializer)
+        _variable_summaries(var)
+        return var
 
     def get_fc_weight_reshape(self, name, shape, num_classes=None):
         print('Layer name: %s' % name)
@@ -429,3 +466,18 @@ def _activation_summary(x):
     # tensor_name = re.sub('%s_[0-9]*/' % TOWER_NAME, '', x.op.name)
     tf.summary.histogram(tensor_name + '/activations', x)
     tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
+
+def _variable_summaries(var):
+    """Attach a lot of summaries to a Tensor."""
+    if not tf.get_variable_scope().reuse:
+        name = var.op.name
+        logging.info("Creating Summary for: %s" % name)
+        with tf.name_scope('summaries'):
+            mean = tf.reduce_mean(var)
+            tf.summary.scalar(name + '/mean', mean)
+            with tf.name_scope('stddev'):
+                stddev = tf.sqrt(tf.reduce_sum(tf.square(var - mean)))
+            tf.summary.scalar(name + '/sttdev', stddev)
+            tf.summary.scalar(name + '/max', tf.reduce_max(var))
+            tf.summary.scalar(name + '/min', tf.reduce_min(var))
+            tf.summary.histogram(name, var)
