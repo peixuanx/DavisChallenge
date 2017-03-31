@@ -146,10 +146,7 @@ class FCN:
         
         self.pred_up = tf.argmax(self.upscore32, dimension=3)
        
-        with tf.variable_scope('score') as scope:
-            self.score = tf.nn.softmax(self.upscore32)
-
-        return self.score 
+        return self.upscore32 
 		
     def _max_pool(self, bottom, name, debug):
         pool = tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],

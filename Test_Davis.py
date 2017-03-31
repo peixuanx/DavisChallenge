@@ -8,7 +8,7 @@ import argparse
 import sys, os
 
 import Davis_FCN 
-#import Read_Davis_t
+import read_davis
 import scipy.misc
 from PIL import Image
 
@@ -17,7 +17,7 @@ from config import *
 def main(argv):
 	
     # import data
-    #pascal_reader = Read_Davis_t.PascalReader()
+    davis_reader = read_davis.DavisReader()
 
     # Create the model
     fcn = Davis_FCN.FCN()
@@ -44,13 +44,12 @@ def main(argv):
     print('Tresting ...')
     loss = []
     for i in range(MAX_ITER):
-        batch_xs, batch_ys, filename = pascal_reader.next_batch(BATCH_SIZE)
+        batch_xs, batch_ys, filename = read_davis.next_test()
         err, truth, pred = sess.run([correct_prediction, tf.argmax(y_,3), tf.argmax(y,3)], 
                             feed_dict={x: batch_xs, y_: batch_ys})
         h,w = np.shape(err[0])
         loss_val = len(np.where(err[0]==False)[0])/(h*w)
 
-        np.save('test.npy',truth[0,:,:])
         scipy.misc.imsave('./test%s/%s_truth.png'%(MODEL_INDEX,filename),
                             truth[0,:,:])
         scipy.misc.imsave('./test%s/%s_pred.png'%(MODEL_INDEX,filename), 
