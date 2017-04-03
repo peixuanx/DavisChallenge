@@ -4,11 +4,13 @@ image/*
 models/*
 dataset/*
 reference/*
+flux/*
 
 *.pdf
 *.png
 *.pyc
 *.npy
+*.sh
 
 .DS_Store
 log

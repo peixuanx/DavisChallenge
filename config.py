@@ -18,10 +18,10 @@ NUM_CLASSES = 2
 WEIGHT_DECAY = 5e-4
 
 # maximum iteration number
-MAX_ITER = 10
+MAX_ITER = 1500
 
 # learning rate
-LR = 1e-3
+LR = 1e-4
 
 # momentum
 MOMENTUM = 0.9
