@@ -4,6 +4,7 @@ image/*
 models/*
 dataset/*
 reference/*
+lib/*
 
 *.pdf
 *.png
