@@ -4,6 +4,7 @@ from config import *
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+import Data_Distor
 
 class DavisReader:
     
@@ -137,6 +138,7 @@ class DavisReader:
                         self.currentTrainImageSet[idx,:,:,:] = np.fliplr(np.flipud(imageRC))
                         self.currentTrainLabelSet[idx,:,:] = distortedLabel[1]
                         idx += 1
+        print(idx)
         self.currentTrainImageSetSize = idx
 
     # Rotate the image and zoom. Angle is in degree
@@ -182,13 +184,14 @@ if __name__ == '__main__':
     reader = DavisReader()
     import matplotlib.pyplot as plt
 
-    for _ in range(10):
+    for _ in range(200):
         # images, labels = reader.next_test()
         images, labels = reader.next_batch()
         print(images.shape)
         for i in range(BATCH_SIZE):
             image = images[i]
             label = labels[i]
+            print(image.shape)
             # print (image.shape)
-            misc.imsave('label.png', label*255)
-            showImageLabel(image, label)
+            # misc.imsave('label.png', label*255)
+            # showImageLabel(image, label)
