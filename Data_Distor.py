@@ -108,7 +108,7 @@ class Data_Distor:
 
     def genMasks(self):
         self.affine()
-        self.non_rigid()
+        # self.non_rigid()
         for i in range(2):
             self.masks[i] = binary_dilation(self.masks[i],iterations=5)
         return self.masks

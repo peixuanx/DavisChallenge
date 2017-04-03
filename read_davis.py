@@ -4,16 +4,23 @@ from config import *
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+import Data_Distor
 
 class DavisReader:
     
     def __init__(self, currentTrainImageId=0, currentTestImageId=0):
-        self.davisDir = '../../DAVIS'
-        trainListFileName = self.davisDir + '/ImageSets/480p/train.txt'
+        #self.davisDir = '../../DAVIS'
+        self.datalist = open('./datalist.txt').readlines()
+        self.trainDir = self.datalist[2].split()[2]
+        print(self.trainDir)
+        self.trainImgFolder = self.datalist[2].split()[3]
+        self.trainLabFolder = self.datalist[2].split()[4]
+        trainListFileName = self.trainDir + '/ImageSets/train.txt'
         trainList = open(trainListFileName)
         self.trainNames = trainList.readlines()
 
-        testListFileName = self.davisDir + '/ImageSets/480p/val.txt'
+        self.testDir = self.datalist[3].split()[2]
+        testListFileName = self.testDir + 'test.txt'
         testList = open(testListFileName)
         self.testNames = testList.readlines()
 
@@ -23,7 +30,7 @@ class DavisReader:
         self.currentTrainImageSetSize = 0
         self.currentTrainImageId = currentTrainImageId
         self.currentTestImageId = currentTestImageId
-        self.augMultiplier = ROTATE_NUM * CROP_HEIGHT_NUM * CROP_WIDTH_NUM * 4 * 2 # 4 for flip, 2 for mask distortion
+        self.augMultiplier = ROTATE_NUM * CROP_HEIGHT_NUM * CROP_WIDTH_NUM * 4 * 1 # 4 for flip, 2 for mask distortion
 
     def next_batch(self):
         if self.currentTrainImageSet is None:
@@ -41,7 +48,7 @@ class DavisReader:
             retImages = self.currentTrainImageSet[self.currentTrainImageSetId:self.currentTrainImageSetId+BATCH_SIZE]
             retLabels = self.currentTrainLabelSet[self.currentTrainImageSetId:self.currentTrainImageSetId+BATCH_SIZE]
             self.currentTrainImageSetId += BATCH_SIZE
-
+    
         return retImages, retLabels
         # return retImages.tolist(), retLabels.tolist()
 
@@ -77,14 +84,16 @@ class DavisReader:
 
         # read image and label
         names = self.trainNames[self.currentTrainImageId].split()
-        imageName = self.davisDir + names[0]
-        labelName = self.davisDir + names[1]
+        imageName = self.trainDir + self.trainImgFolder + names[0] + '.jpg'
+        labelName = self.trainDir + self.trainLabFolder + names[0] + '.png'
         image = misc.imread(imageName)
         label = misc.imread(labelName) / 255
         self.currentTrainImageId += 1
 
-        self.currentTrainImageSet = np.zeros((self.augMultiplier, CROP_HEIGHT, CROP_WIDTH, image.shape[2]), 'uint8')
-        self.currentTrainLabelSet = np.zeros((self.augMultiplier, CROP_HEIGHT, CROP_WIDTH), 'uint8')
+        self.currentTrainImageSet = np.zeros((self.augMultiplier, CROP_HEIGHT, CROP_WIDTH, 
+                                                image.shape[2]+1), 'uint8')
+        self.currentTrainLabelSet = np.zeros((self.augMultiplier, CROP_HEIGHT, CROP_WIDTH, 
+                                                NUM_CLASSES), 'uint8')
         idx = 0
         # rotate
         for angle in np.linspace(-90, 90, ROTATE_NUM):
@@ -103,40 +112,56 @@ class DavisReader:
 
                     if np.any(labelRC):
                         # no flip
-                        self.currentTrainImageSet[idx,:,:,:] = imageRC
+                        self.currentTrainImageSet[idx,:,:,0:3] = imageRC
                         distortedLabel = self.data_distort(labelRC)
-                        self.currentTrainLabelSet[idx,:,:] = distortedLabel[0]
+                        self.currentTrainImageSet[idx,:,:,-1] = distortedLabel[0]
+                        self.currentTrainLabelSet[idx,:,:,0] = 1-labelRC
+                        self.currentTrainLabelSet[idx,:,:,1] = labelRC
                         idx += 1
+                        '''
                         self.currentTrainImageSet[idx,:,:,:] = imageRC
                         self.currentTrainLabelSet[idx,:,:] = distortedLabel[1]
                         idx += 1
-                        
+                        '''                        
+
                         # flip ud
-                        self.currentTrainImageSet[idx,:,:,:] = np.flipud(imageRC)
+                        self.currentTrainImageSet[idx,:,:,0:3] = np.flipud(imageRC)
                         distortedLabel = self.data_distort(np.flipud(labelRC))
-                        self.currentTrainLabelSet[idx,:,:] = distortedLabel[0]
+                        self.currentTrainImageSet[idx,:,:,-1] = distortedLabel[0]
+                        self.currentTrainLabelSet[idx,:,:,0] = np.flipud(1-labelRC)
+                        self.currentTrainLabelSet[idx,:,:,1] = np.flipud(labelRC)
                         idx += 1
+                        '''
                         self.currentTrainImageSet[idx,:,:,:] = np.flipud(imageRC)
                         self.currentTrainLabelSet[idx,:,:] = distortedLabel[1]
                         idx += 1
+                        '''
 
                         # flip lr
-                        self.currentTrainImageSet[idx,:,:,:] = np.fliplr(imageRC)
+                        self.currentTrainImageSet[idx,:,:,0:3] = np.fliplr(imageRC)
                         distortedLabel = self.data_distort(np.fliplr(labelRC))
-                        self.currentTrainLabelSet[idx,:,:] = distortedLabel[0]
+                        self.currentTrainImageSet[idx,:,:,-1] = distortedLabel[0]
+                        self.currentTrainLabelSet[idx,:,:,0] = np.fliplr(1-labelRC)
+                        self.currentTrainLabelSet[idx,:,:,1] = np.fliplr(labelRC)
                         idx += 1
+                        '''
                         self.currentTrainImageSet[idx,:,:,:] = np.fliplr(imageRC)
                         self.currentTrainLabelSet[idx,:,:] = distortedLabel[1]
                         idx += 1
+                        '''
 
                         # flip udlr
-                        self.currentTrainImageSet[idx,:,:,:] = np.fliplr(np.flipud(imageRC))
+                        self.currentTrainImageSet[idx,:,:,0:3] = np.fliplr(np.flipud(imageRC))
                         distortedLabel = self.data_distort(np.fliplr(np.flipud(labelRC)))
-                        self.currentTrainLabelSet[idx,:,:] = distortedLabel[0]
+                        self.currentTrainImageSet[idx,:,:,-1] = distortedLabel[0]
+                        self.currentTrainLabelSet[idx,:,:,0] = np.fliplr(np.flipud(1-labelRC))
+                        self.currentTrainLabelSet[idx,:,:,1] = np.fliplr(np.flipud(labelRC))
                         idx += 1
+                        '''
                         self.currentTrainImageSet[idx,:,:,:] = np.fliplr(np.flipud(imageRC))
                         self.currentTrainLabelSet[idx,:,:] = distortedLabel[1]
                         idx += 1
+                        '''
         self.currentTrainImageSetSize = idx
 
     # Rotate the image and zoom. Angle is in degree
@@ -170,6 +195,10 @@ class DavisReader:
         mask = distort.genMasks()
         return mask
 
+def read_list():
+    f = open('./datalist.txt')
+     
+
 def showImageLabel(image, label):
     plt.subplot(121)
     plt.imshow(image)
@@ -181,14 +210,17 @@ if __name__ == '__main__':
     print('test read davis')
     reader = DavisReader()
     import matplotlib.pyplot as plt
-
-    for _ in range(10):
+    
+    for _ in range(1):
         # images, labels = reader.next_test()
         images, labels = reader.next_batch()
         print(images.shape)
+        print(labels.shape)
+        '''
         for i in range(BATCH_SIZE):
             image = images[i]
             label = labels[i]
             # print (image.shape)
             misc.imsave('label.png', label*255)
             showImageLabel(image, label)
+        '''

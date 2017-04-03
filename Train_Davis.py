@@ -25,12 +25,12 @@ def main(argv):
     f = open('./file_index', 'a+')
 
     # import data
-    davis_reader = read_davis.DavisReader()
+    davis_reader = read_davis.DavisReader(file_index)
     
     # Create the model
     fcn = Davis_FCN.FCN() 
-    x = tf.placeholder(tf.float32) #shape=[batch size, dimemsionality] 
-    y_ = tf.placeholder(tf.float32)
+    x = tf.placeholder(tf.float32)#, shape=[BATCH_SIZE, None, None, 4]) 
+    y_ = tf.placeholder(tf.float32)#, shape=[BATCH_SIZE, None, None, NUM_CLASSES])
     y = fcn.build(x, train=True, num_classes=NUM_CLASSES, 
                 random_init_fc8=True, debug=True)
 
@@ -57,17 +57,19 @@ def main(argv):
     print('Training ...')
     loss = []
     for i in range(MAX_ITER):
-        batch_xs, batch_ys, filename = davis_reader.next_batch()
-        _, loss_val = sess.run([train_step,cross_entropy], feed_dict={x: batch_xs, y_: batch_ys})
-        if i%10==0:
-            save_path = saver.save(sess, "./models/model%s"%MODEL_INDEX)      
+        batch_xs, batch_ys = davis_reader.next_batch()
+        entropy = 0
+        _, loss_val = sess.run([train_step,cross_entropy], 
+                                feed_dict={x: batch_xs, y_: batch_ys})
+        save_path = saver.save(sess, "./models/model%s"%MODEL_INDEX)      
         loss.append(loss_val)
+        np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
         f.write(str(file_index+i+1)+'\n')
-        log = 'Iteration: %s'%str(i) + ' | Filename: %s'%filename + \
+        log = 'Iteration: %s'%str(i) + \
                 ' | Model saved in file: %s'%save_path + ' | Cross entropy loss: %s'%str(loss_val)
         print(log)
     f.close()
-    np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
+    #np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
 
 
 if __name__=='__main__':
