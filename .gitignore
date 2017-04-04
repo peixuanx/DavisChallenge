@@ -6,6 +6,7 @@ reference/*
 flux/*
 lib/*
 
+
 *.tgz
 *.pdf
 *.tmp
@@ -20,3 +21,4 @@ lib/*
 
 .DS_Store
 log
+file_index
