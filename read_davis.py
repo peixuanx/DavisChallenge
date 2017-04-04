@@ -209,7 +209,7 @@ if __name__ == '__main__':
         images, labels = reader.next_batch()
         print(images.shape)
         print(labels.shape)
-        # '''
+        '''
         for i in range(BATCH_SIZE):
             image = images[i,:,:,:3]
             label = labels[i,:,:,0]
@@ -218,4 +218,4 @@ if __name__ == '__main__':
             misc.imsave('label.png', label*255)
             misc.imsave('image.png', image)
             showImageLabel(image, label)
-        # '''
+        '''
