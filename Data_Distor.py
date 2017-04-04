@@ -58,9 +58,9 @@ class Data_Distor:
             R = R * np.log(R)
             pLift[:,3:] = R
             return pLift
-
-        ratio = 0.1
-        for i in range(2):
+        
+        def genControlPts():
+            ratio = 0.1
             # source control points
             #b = np.random.randint(0,4,size=5)
             #xs = np.zeros(b.shape)
@@ -73,22 +73,33 @@ class Data_Distor:
             #ys[b<2]  = np.random.uniform(self.bbox[2],self.bbox[3],size=xs[b<2].size)#self.bbox[2] + np.random.uniform(-0.1*self.height, 1.1*self.height, size=ys[b<2].size)
             xs = np.array([self.bbox[0],self.bbox[1],self.bbox[0],self.bbox[1],(self.bbox[0]+self.bbox[1])/2])
             ys = np.array([self.bbox[2],self.bbox[2],self.bbox[3],self.bbox[3],(self.bbox[2]+self.bbox[3])/2])
-            cps = np.vstack([xs, ys]).T
 
             # target control points
             xt = np.random.uniform(-ratio*self.width, ratio*self.width, size=5)
             xt += xs
             yt = np.random.uniform(-ratio*self.height, ratio*self.height, size=5)
             yt += ys
+            return [xs, ys, xt, yt]
             
-            # construct T
-            T = makeT(cps)
+        for i in range(2):
 
-            # solve cx, cy (coefficients for x and y)
-            xtAug = np.concatenate([xt, np.zeros(3)])
-            ytAug = np.concatenate([yt, np.zeros(3)])
-            cx = np.linalg.solve(T, xtAug) # [K+3]
-            cy = np.linalg.solve(T, ytAug)
+            succeed = False
+            while not succeed:
+                try:
+                    xs, ys, xt ,yt = genControlPts()
+                    cps = np.vstack([xs, ys]).T
+
+                    # construct T
+                    T = makeT(cps)
+                    
+                    # solve cx, cy (coefficients for x and y)
+                    xtAug = np.concatenate([xt, np.zeros(3)])
+                    ytAug = np.concatenate([yt, np.zeros(3)])
+                    cx = np.linalg.solve(T, xtAug) # [K+3]
+                    cy = np.linalg.solve(T, ytAug)
+                    succeed = True
+                except:
+                    succeed = False
 
             # dense grid
             ygs, xgs = np.nonzero(self.affineMasks[i])
@@ -108,7 +119,7 @@ class Data_Distor:
 
     def genMasks(self):
         self.affine()
-        # self.non_rigid()
+        self.non_rigid()
         for i in range(2):
             self.masks[i] = binary_dilation(self.masks[i],iterations=5)
         return self.masks
