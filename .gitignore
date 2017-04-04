@@ -4,12 +4,18 @@ models/*
 dataset/*
 reference/*
 flux/*
+lib/*
 
 *.pdf
+*.tmp
+*.flo
+*.jpg
+*.png
 *.png
 *.pyc
 *.npy
 *.sh
+*.caffemodel
 
 .DS_Store
 log
