@@ -1,5 +1,4 @@
 resource/*
-VOC2011/*
 image/*
 models/*
 dataset/*

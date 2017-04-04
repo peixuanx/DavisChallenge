@@ -15,6 +15,19 @@ from PIL import Image
 from config import *
 
 def onlineTraining():
+    
+    # read current file index
+    file_index = 0
+    if os.path.exists('./file_index'):
+        f = open('./file_index')
+        for line in f:
+            file_index = int(line)
+        f.close()
+    f = open('./file_index', 'a+')
+    
+    # import data
+    davis_reader = read_davis.DavisReader()
+    
     # Create the model
     fcn = Davis_FCN.FCN() 
     x = tf.placeholder(tf.float32) #shape=[batch size, dimemsionality] 
@@ -24,7 +37,6 @@ def onlineTraining():
 	# Define loss and optimizer
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
-    #cross_entropy = tf.reduce_sum(cross_entropy)
     #train_step = tf.train.GradientDescentOptimizer(LR).minimize(cross_entropy)
     train_step = tf.train.MomentumOptimizer(learning_rate=LR, momentum=MOMENTUM)
     train_step = train_step.minimize(cross_entropy)
@@ -42,21 +54,21 @@ def onlineTraining():
     
     # Training
     print('='*40)
-    print('Training ...')
+    print('Online Training ...')
     loss = []
     for i in range(MAX_ITER):
-        batch_xs, batch_ys, filename = pascal_reader.next_batch(BATCH_SIZE)
-        _, loss_val = sess.run([train_step,cross_entropy], feed_dict={x: batch_xs, y_: batch_ys})
+        batch_xs, batch_ys = davis_reader.next_batch()
+        _, loss_val = sess.run([train_step,cross_entropy], 
+                                feed_dict={x: batch_xs, y_: batch_ys})
         save_path = saver.save(sess, "./models/model%s"%MODEL_INDEX)      
         loss.append(loss_val)
+        np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
         f.write(str(file_index+i+1)+'\n')
-        log = 'Iteration: %s'%str(i) + ' | Filename: %s'%filename + \
+        log = 'Iteration: %s'%str(i) + \
                 ' | Model saved in file: %s'%save_path + ' | Cross entropy loss: %s'%str(loss_val)
-        logs.write(log+'\n')
         print(log)
-    logs.close()
     f.close()
-    np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
+    #np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
 
 
 def main(argv):
@@ -69,7 +81,6 @@ def main(argv):
     x = tf.placeholder(tf.float32) #shape=[batch size, dimemsionality] 
     y_ = tf.placeholder(tf.float32) 
     y = fcn.build(x, num_classes=NUM_CLASSES, debug=False)
-    
 
     # Define prediction
     correct_prediction = tf.equal(tf.argmax(y, 3), tf.argmax(y_, 3))
