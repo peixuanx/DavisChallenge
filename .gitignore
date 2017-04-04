@@ -10,6 +10,7 @@ lib/*
 *.pdf
 *.tmp
 *.flo
+*.jpg
 *.png
 *.png
 *.pyc
