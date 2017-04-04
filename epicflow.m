@@ -1,17 +1,18 @@
-function f = get_epicflow( im1_path, im2_path )
+function out = get_epicflow( im1_path, im2_path )
 %GET_EPICFLOW Wrapper for epicflow 
 %   EpicFlow: Edge-Preserving Interpolation of Correspondences for Optical 
 %   Flow, Jerome Revaud, Philippe Weinzaepfel, Zaid Harchaoui and Cordelia 
 %   Schmid, CVPR 2015.
 
 % setup 
-dir_path = fileparts(mfilename('./lib'));
+dir_path = 'lib';
 SED_path = fullfile(dir_path,'SED');
 piotr_path = fullfile(dir_path,'toolbox');
 dm_path = fullfile(dir_path,'deepmatching_1.2_c++','deepmatching-static');
-epicflow_path = fullfile(dir_path,'EpicFlow_v1.00','epicflow-static');
-model_path = fullfile(dir_path,'release/models');
-flow_path = '/';
+epicflow_path = fullfile(dir_path,'EpicFlow_v1.0','epicflow-static');
+model_path = fullfile(dir_path,'SED','models/modelBsds.mat');
+flow_path = './epicflow_output.flo';
+image_path = './epicflow_output';
 
 addpath(genpath(SED_path));
 addpath(genpath(piotr_path));
@@ -66,11 +67,16 @@ cmd = sprintf('%s %s %s %s %s %s', epicflow_path, im1_path, im2_path, ...
     edge_path, match_path, flow_path); 
 if(system(cmd)), error('Error while executing: %s',cmd); end
 f = flow_path; 
+e = edge_path;
+m = match_path;
+img = flowToColor(readFlowFile(f));
+imwrite(img,[image_path,'.jpg']);
+out = [f,'$',e,'$',m];
 
 % clean up
 if ~isempty(strfind(im1_path,int2str(processid))), delete(im1_path); end
 if ~isempty(strfind(im2_path,int2str(processid))), delete(im2_path); end
-delete(edge_path);
-delete(match_path);
+% delete(edge_path);
+% delete(match_path);
 
 end
