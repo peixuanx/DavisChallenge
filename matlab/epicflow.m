@@ -5,6 +5,7 @@ function out = get_epicflow( im1_path, im2_path )
 %   Schmid, CVPR 2015.
 
 % setup 
+isDemo = false;
 dir_path = 'lib';
 SED_path = fullfile(dir_path,'SED');
 piotr_path = fullfile(dir_path,'toolbox');
@@ -66,17 +67,27 @@ if(system(cmd)), error('Error while executing: %s',cmd); end
 cmd = sprintf('%s %s %s %s %s %s', epicflow_path, im1_path, im2_path, ...
     edge_path, match_path, flow_path); 
 if(system(cmd)), error('Error while executing: %s',cmd); end
-f = flow_path; 
+
+% store edge
+edge_path = fullfile(pwd,sprintf('edge_%d.ppm',processid));
+imwrite(edges, edge_path);
+
+% return values
+f = flow_path;
 e = edge_path;
 m = match_path;
-img = flowToColor(readFlowFile(f));
-imwrite(img,[image_path,'.jpg']);
 out = [f,'$',e,'$',m];
 
 % clean up
 if ~isempty(strfind(im1_path,int2str(processid))), delete(im1_path); end
 if ~isempty(strfind(im2_path,int2str(processid))), delete(im2_path); end
-% delete(edge_path);
-% delete(match_path);
+
+% return .jpg file
+if isDemo
+    img = flowToColor(readFlowFile(f));
+    imwrite(img,[image_path,'.jpg']);
+    delete(edge_path);
+    delete(match_path);
+end
 
 end
