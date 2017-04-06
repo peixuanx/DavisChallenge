@@ -6,7 +6,7 @@ IMAGE_SIZE = 424
 DIM = IMAGE_SIZE*IMAGE_SIZE
 '''
 # model index
-MODEL_INDEX = 1
+MODEL_INDEX = 4
 
 # data directory
 DATA_DIR = './dataset/MSRK10K'
@@ -21,10 +21,10 @@ NUM_CLASSES = 2
 WEIGHT_DECAY = 5e-4
 
 # maximum iteration number
-MAX_ITER = 3000
+MAX_ITER = 10000
 
 # learning rate
-LR = 1e-8
+LR = 1e-9
 
 # momentum
 MOMENTUM = 0.9
@@ -40,6 +40,3 @@ CROP_WIDTH = 200
 CROP_HEIGHT = 200
 CROP_WIDTH_NUM = 5
 CROP_HEIGHT_NUM = 5
-
-# matlab working path
-MATLAB_PATH = "./matlab"
