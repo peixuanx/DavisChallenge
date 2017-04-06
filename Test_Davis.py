@@ -101,16 +101,16 @@ def main(argv):
     print('Tresting ...')
     loss = []
     for i in range(MAX_ITER):
-        batch_xs, batch_ys, filename = read_davis.next_test()
+        batch_xs, batch_ys, filename = davis_reader.next_test()
         err, truth, pred = sess.run([correct_prediction, tf.argmax(y_,3), tf.argmax(y,3)], 
                             feed_dict={x: batch_xs, y_: batch_ys})
         h,w = np.shape(err[0])
         loss_val = len(np.where(err[0]==False)[0])/(h*w)
 
         scipy.misc.imsave('./test%s/%s_truth.png'%(MODEL_INDEX,filename),
-                            truth[0,:,:])
+                            truth[0,:,:]*255)
         scipy.misc.imsave('./test%s/%s_pred.png'%(MODEL_INDEX,filename), 
-                            pred[0,:,:])
+                            pred[0,:,:]*255)
         loss.append(loss_val)
         print('Iteration: %s'%str(i) + ' | Filename: %s'%filename + ' | Error rate: %s'%str(loss_val))
     np.save('./models/tstAccuracy%s'%MODEL_INDEX, np.array(loss))

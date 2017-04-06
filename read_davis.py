@@ -50,19 +50,25 @@ class DavisReader:
         label = misc.imread(labelName) / 255
         self.currentTestImageId += 1
 
-        retImages = np.zeros((BATCH_SIZE,) + image.shape)
-        retLabels = np.zeros((BATCH_SIZE,) + label.shape)
-        retImages[0] = image
-        retLabels[0] = label
+        retImages = np.zeros((BATCH_SIZE,) + image.shape + np.array([0,0,0,1]))
+        retLabels = np.zeros((BATCH_SIZE,) + label.shape + (2,)) 
+        retImages[0,:,:,0:3] = image
+        retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
+        retLabels[0,:,:,0] = 1-label
+        retLabels[0,:,:,1] = label
         for i in range(1,BATCH_SIZE):
             names = self.testNames[self.currentTestImageId].split()
             imageName = self.davisDir + names[0]
             labelName = self.davisDir + names[1]
-            retImages[i,:,:,:] = misc.imread(imageName)
-            retLabels[i,:,:] = misc.imread(labelName) / 255
+            image = misc.imread(imageName)
+            label = misc.imread(labelName) / 255
+            retImages[0,:,:,0:3] = image
+            retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
+            retLabels[0,:,:,0] = 1-label
+            retLabels[0,:,:,1] = label
             self.currentTestImageId += 1
 
-        return retImages, retLabels
+        return retImages, retLabels, names[0].split('/')[-1]
 
     def augmentData(self):
         # reset image set id and check training data

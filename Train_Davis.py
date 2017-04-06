@@ -52,9 +52,11 @@ def main(argv):
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
                                             log_device_placement=False))
     saver = tf.train.Saver()
-    if os.path.exists('models/models%s'%MODEL_INDEX):
-        saver.restore(sess, "./models/model%s"%MODEL_INDEX)
-        print("Model restored ...")
+    if not os.path.exists('models'):
+         os.makedirs('models')
+    else:
+        saver.restore(sess, "./models/model%s"%str(MODEL_INDEX-1))
+        print("Model%s restored ..."%str(MODEL_INDEX-1))
     
     init = tf.global_variables_initializer()
     sess.run(init)
@@ -71,19 +73,15 @@ def main(argv):
         loss.append(loss_val)
         if i%100==0:
             save_path = saver.save(sess, "./models/model%s"%MODEL_INDEX)      
-            np.save('./models/trCrossEntropyLoss%s_%s'%(MODEL_INDEX,str(file_index+i+1)),
-                     np.array(loss))
             f.write(str(file_index+i+1)+'\n')
         log = 'Iteration: %s'%str(i) + \
-                ' | Model saved in file: %s'%save_path + ' | Cross entropy loss: %s'%str(loss_val)
+                ' | Model saved in file: %s'%save_path + ' | Cross entropy loss: %s'%str(loss_val) 
         print(log)
     f.close()
-    #np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
+    np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
 
 
 if __name__=='__main__':
-    if not os.path.exists('models'):
-        os.makedirs('models')
     tf.app.run(main=main, argv=[])
 
 
