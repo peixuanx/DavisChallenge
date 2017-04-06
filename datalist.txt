@@ -1,4 +1,0 @@
-train 900 ./dataset/ECSSD/ images/ labels/ 
-test 100 ./dataset/ECSSD/ images/ labels/
-train 9000 ./dataset/MSRK10K/ images/ labels/
-test 999 ./dataset/MSRK10K/ images/ labels/

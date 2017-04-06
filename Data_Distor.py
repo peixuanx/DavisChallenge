@@ -8,7 +8,7 @@ class Data_Distor:
     def __init__(self, image):
         self.image = image
         self.affineMasks = [image, image]
-        self.masks = [np.zeros(image.shape), np.zeros(image.shape)]
+        self.masks = np.zeros(image.shape+(3,))
         # Original mask parameters
         y,x = image.nonzero()
         self.bbox = [min(x),max(x),min(y),max(y)]
@@ -115,11 +115,12 @@ class Data_Distor:
             xgt, ygt = xgt[idx], ygt[idx]
             idx = np.all([ygt>=0, ygt<self.image.shape[0]],axis=0)
             xgt, ygt = xgt[idx], ygt[idx]
-            self.masks[i][ygt,xgt] = 1
+            self.masks[ygt,xgt,i] = 1
 
     def genMasks(self):
         self.affine()
         self.non_rigid()
+
         for i in range(2):
-            self.masks[i] = binary_dilation(self.masks[i],iterations=5)
+            self.masks[:,:,i] = binary_dilation(self.masks[:,:,i],iterations=5)
         return self.masks
