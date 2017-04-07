@@ -16,6 +16,7 @@ from config import *
 def main(argv):
     
     # read current file index
+    '''
     file_index = 0
     if os.path.exists('./file_index'):
         f = open('./file_index')
@@ -23,9 +24,9 @@ def main(argv):
             file_index = int(line)
         f.close()
     f = open('./file_index', 'a+')
-
+    '''
     # import data
-    davis_reader = read_davis.DavisReader(file_index)
+    davis_reader = read_davis.DavisReader()
     
     # Create the model
     fcn = Davis_FCN.FCN() 
@@ -51,15 +52,15 @@ def main(argv):
     # Session Define
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
                                             log_device_placement=False))
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    
     saver = tf.train.Saver()
     if not os.path.exists('models'):
          os.makedirs('models')
     else:
         saver.restore(sess, "./models/model%s"%str(MODEL_INDEX-1))
         print("Model%s restored ..."%str(MODEL_INDEX-1))
-    
-    init = tf.global_variables_initializer()
-    sess.run(init)
     
     # Training
     print('='*40)
@@ -73,11 +74,11 @@ def main(argv):
         loss.append(loss_val)
         if i%100==0:
             save_path = saver.save(sess, "./models/model%s"%MODEL_INDEX)      
-            f.write(str(file_index+i+1)+'\n')
+            #f.write(str(file_index+i+1)+'\n')
         log = 'Iteration: %s'%str(i) + \
                 ' | Model saved in file: %s'%save_path + ' | Cross entropy loss: %s'%str(loss_val) 
         print(log)
-    f.close()
+    #f.close()
     np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
 
 

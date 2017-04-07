@@ -6,7 +6,7 @@ IMAGE_SIZE = 424
 DIM = IMAGE_SIZE*IMAGE_SIZE
 '''
 # model index
-MODEL_INDEX = 4
+MODEL_INDEX = 1
 
 # data directory
 DATA_DIR = './dataset/MSRK10K'
@@ -24,7 +24,7 @@ WEIGHT_DECAY = 5e-4
 MAX_ITER = 10000
 
 # learning rate
-LR = 1e-9
+LR = 1e-11
 
 # momentum
 MOMENTUM = 0.9
