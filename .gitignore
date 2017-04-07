@@ -6,7 +6,7 @@ reference/*
 flux/*
 lib/*
 
-
+*.ppm
 *.tgz
 *.pdf
 *.tmp
