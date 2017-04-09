@@ -88,13 +88,13 @@ def main(argv):
     # Session Define
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,
                                             log_device_placement=False))
+    init = tf.global_variables_initializer()
+    sess.run(init)
     #saver = tf.train.Saver()
     saver = tf.train.import_meta_graph("./models/model%s.meta"%MODEL_INDEX)    
     saver.restore(sess, "./models/model%s"%MODEL_INDEX)
     print("Model restored ...")
     
-    init = tf.global_variables_initializer()
-    sess.run(init)
 
     # Testing
     print('='*40)
