@@ -40,3 +40,6 @@ CROP_WIDTH = 200
 CROP_HEIGHT = 200
 CROP_WIDTH_NUM = 5
 CROP_HEIGHT_NUM = 5
+
+# matlab directory
+MATLAB_PATH = './matlab/'
