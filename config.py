@@ -9,7 +9,7 @@ DIM = IMAGE_SIZE*IMAGE_SIZE
 MODEL_INDEX = 1
 
 # data directory
-DATA_DIR = './dataset/MSRK10K'
+DATA_DIR = './dataset/DAVIS'
 
 # patchwise batch size
 BATCH_SIZE = 10
@@ -17,7 +17,7 @@ BATCH_SIZE = 10
 # number of classes
 NUM_CLASSES = 2
 
-# weight regularization 
+# weight regularization
 WEIGHT_DECAY = 5e-4
 
 # maximum iteration number
@@ -40,3 +40,6 @@ CROP_WIDTH = 200
 CROP_HEIGHT = 200
 CROP_WIDTH_NUM = 5
 CROP_HEIGHT_NUM = 5
+
+# matlab directory
+MATLAB_PATH = './matlab/'
