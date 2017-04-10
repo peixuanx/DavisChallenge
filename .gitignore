@@ -17,6 +17,7 @@ lib/*
 *.pyc
 *.npy
 *.sh
+*.zip
 *.caffemodel
 
 .DS_Store
