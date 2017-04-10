@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import logging
 from math import ceil
+from Davis_SRNN import *
 import sys
 
 import numpy as np
@@ -33,48 +34,40 @@ class FCN:
 
         self.data_dict = np.load(vgg16_npy_path, encoding='latin1').item()
         self.wd = WEIGHT_DECAY
+        self.srnn = SRNN()
         print("npy file loaded")
 
-    def build(self, rgb, rgb_rnn, train=False, num_classes=20, random_init_fc8=False,
+    def build(self, rgb, train=False, num_classes=20, random_init_fc8=False,
                debug=False):
 
         # Convert RGB to BGR
-        tf.Print(rgb, [tf.shape(rgb)],
-                              message='Shape of input rgbimage: ',
-                             summarize=4, first_n=1)
-        with tf.name_scope('Processing'):
-            red, green, blue, mask = tf.split(rgb, 4, 3)
-            bgr = tf.concat([
-                blue - VGG_MEAN[0],
-                green - VGG_MEAN[1],
-                red - VGG_MEAN[2],
-                mask], axis=3)
+        tf.Print(rgb, [tf.shape(rgb_rnn)],
+                      message='Shape of input rgbimage: ',
+                      summarize=4, first_n=1)
 
-            if debug:
-                bgr = tf.Print(bgr, [tf.shape(bgr)],
-                               message='Shape of input image: ',
-                               summarize=4, first_n=1)
+        # Split to two inputs
+        with tf.name_scope('Processing'):
+            r, g, b, m, o1, o2, o3 = tf.split(rgb_rnn, 7, 3)
+            bgr = tf.concat([   b-VGG_MEAN[0],
+                                g-VGG_MEAN[1],
+                                r-VGG_MEAN[2],
+                                m], axis=3) 
+            bgro = tf.concat([  b-VGG_MEAN[0],
+                                g-VGG_MEAN[1],
+                                r-VGG_MEAN[2],
+                                m, o1, o2, o3], axis=3) 
+
+        # process to SRNN
+        bgro_rnn = self.srnn.inference(bgro, 512)
 
         # Convert RGB to BGR
-        tf.Print(rgb, [tf.shape(rgb_rnn)],
-                              message='Shape of input rgbimage: ',
-                             summarize=4, first_n=1)
-        with tf.name_scope('Processing'):
-            red, green, blue, mask, o1, o2, o3 = tf.split(rgb_rnn, 7, 3)
-            bgr_rnn = tf.concat([
-                blue - VGG_MEAN[0],
-                green - VGG_MEAN[1],
-                red - VGG_MEAN[2],
-                mask, o1, o2, o3], axis=3)
+        tf.Print(rgb, [tf.shape(rgb)],
+                      message='Shape of input rgbimage: ',
+                      summarize=4, first_n=1)
 
-            if debug:
-                bgr_rnn = tf.Print(bgr, [tf.shape(bgr)],
-                                        message='Shape of input image: ',
-                                        summarize=4, first_n=1)
-
-        out1 = self.build1(self, bgr, train=False, num_classes=20, random_init_fc8=False,
-        out2 = self.build1(self, bgr_rnn, prefix='rnn_', train=False, num_classes=20, random_init_fc8=False,
-        out = self.build2(self, out1, out2, train=False, num_classes=20, random_init_fc8=False,
+        out1 = self.build1(self, bgr, prefix='', train=False, num_classes=20, random_init_fc8=False,
+        out2 = self.build1(self, bgro_rnn, prefix='rnn_', train=False, num_classes=20, random_init_fc8=False,
+        out  = self.build2(self, out1, out2, train=False, num_classes=20, random_init_fc8=False,
     
         return out
 

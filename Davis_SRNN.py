@@ -9,7 +9,7 @@ class SRNN:
         self.node_names = ['image']
         self.inputs = {}
 
-    def inference(self, video, num_edges=2, num_units, num_classes=2):
+    def inference(self, video, num_units, num_edges=2, num_classes=2):
         num_frames = tf.shape(video)[0]
         edgeRNN = {}
         nodeRNN = {}

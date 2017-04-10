@@ -8,6 +8,7 @@ import argparse
 import sys, os
 
 import Davis_FCN 
+import Davis_Epic
 import read_davis
 import scipy.misc
 from PIL import Image
@@ -29,12 +30,12 @@ def onlineTraining():
     davis_reader = read_davis.DavisReader()
     
     # Create the model
-    fcn = Davis_FCN.FCN() 
+    fcn = Davis_Epic.FCN() 
     x = tf.placeholder(tf.float32) #shape=[batch size, dimemsionality] 
     y_ = tf.placeholder(tf.float32)
     y = fcn.build(x, train=True, num_classes=NUM_CLASSES, debug=True)
 
-	# Define loss and optimizer
+    # Define loss and optimizer
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
     #train_step = tf.train.GradientDescentOptimizer(LR).minimize(cross_entropy)
@@ -72,7 +73,7 @@ def onlineTraining():
 
 
 def main(argv):
-	
+
     # import data
     davis_reader = read_davis.DavisReader()
 

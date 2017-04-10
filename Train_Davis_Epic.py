@@ -8,6 +8,7 @@ import argparse
 import sys, os
 
 import Davis_FCN
+import Davis_Epic
 import read_davis
 import scipy.misc
 
@@ -29,7 +30,7 @@ def main(argv):
     davis_reader = read_davis.DavisReader()
     
     # Create the model
-    fcn = Davis_FCN.FCN() 
+    fcn = Davis_Epic.FCN() 
     x = tf.placeholder(tf.float32)#, shape=[BATCH_SIZE, None, None, 4]) 
     y_ = tf.placeholder(tf.float32)#, shape=[BATCH_SIZE, None, None, NUM_CLASSES])
     y = fcn.build(x, train=True, num_classes=NUM_CLASSES, 
