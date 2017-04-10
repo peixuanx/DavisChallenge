@@ -262,7 +262,7 @@ class DavisReader:
                     self.currentTrainLabelSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], NUM_CLASSES), 'uint8'))
 
 
-                idx = nthImage * rid * 8
+                idx = nthImage * 8
                 # no flip
                 print(self.currentTrainImageSet[rid].shape)
                 print(imageR.shape)
