@@ -31,12 +31,12 @@ def computeOpticalFlow(img1, img2):
     img_e = misc.imread(edge_file, mode='L')
     img_e = np.reshape(img_e, (H,W,1))
     img_m = readMatchFile(match_file, H, W)
-    img_concat = np.concatenate((img, img_e, img_m), axis=2)
+    img_concat = np.concatenate((img_e, img_m), axis=2)
 
     return img_concat
 
 # affine transfrom for optical flow
-# 
+#
 # img:  input image, 2 channels: [magnitude; pole]
 # rot:  rotation in degree
 # sc:   scaling factor (1.0==same)
@@ -65,7 +65,7 @@ def affine(img, rot, sc, flip):
 
     return img
 
-# parse match file to image 
+# parse match file to image
 def readMatchFile(match_file, H, W):
 
     # stack y/x motion vectors into 2 channels
