@@ -30,7 +30,7 @@ class DavisReader:
         self.videoAugMultiplier = ROTATE_NUM * 4 * 2 # 4 for flip, 2 for mask distortion
 
         self.mode = mode
-        self.videoId = -1
+        self.videoId = 0
         self.videoSize = 0
 
     def next_batch(self):
@@ -220,7 +220,7 @@ class DavisReader:
     def VideoAugmentData(self):
         # reset image set id and check training data
         # print(len(self.trainNames))
-        imageIdList = range(self.videoId+1, self.videoId+self.videoSize)
+        imageIdList = range(self.videoId, self.videoId+self.videoSize)
         self.videoId += self.videoSize
         self.trainImageSetUsedTime = 0
         self.currentTrainImageSet = []
@@ -242,11 +242,11 @@ class DavisReader:
                 distLabel = label
 
             if nthImage > 0:
-                # tmp = epicflow.computeOpticalFlow(self.davisDir+self.trainNames[imageId-1].split()[0], imageName)
-                # edge = tmp[:,:,0:1]
-                # flow = tmp[:,:,1:]
-                edge = np.zeros((image.shape[0], image.shape[1], 1))
-                flow = np.zeros((image.shape[0], image.shape[1], 2))
+                tmp = epicflow.computeOpticalFlow(self.davisDir+self.trainNames[imageId-1].split()[0], imageName)
+                edge = tmp[:,:,0:1]
+                flow = tmp[:,:,1:]
+                # edge = np.zeros((image.shape[0], image.shape[1], 1))
+                # flow = np.zeros((image.shape[0], image.shape[1], 2))
 
             print(names[0])
             # rotate
