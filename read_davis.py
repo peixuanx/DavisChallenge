@@ -30,7 +30,7 @@ class DavisReader:
         self.videoAugMultiplier = ROTATE_NUM * 4 * 2 # 4 for flip, 2 for mask distortion
 
         self.mode = mode
-        self.videoId = 0
+        self.videoId = -1
         self.videoSize = 0
 
     def next_batch(self):
@@ -51,11 +51,11 @@ class DavisReader:
         elif self.mode == "video":
             if self.currentTrainImageSet is None:
                 self.videoSize = self.findVideoSize(self.trainNames, self.videoId)
-                self.VideoAugmentData(cropping=False)
+                self.VideoAugmentData()
 
             if self.trainImageSetUsedTime == self.videoAugMultiplier:
                 self.videoSize = self.findVideoSize(self.trainNames, self.videoId)
-                self.VideoAugmentData(cropping=False)
+                self.VideoAugmentData()
 
             rotateId = self.trainImageSetUsedTime%ROTATE_NUM
             id = np.arange(int(self.trainImageSetUsedTime/ROTATE_NUM), self.videoAugMultiplier/ROTATE_NUM*self.videoSize, self.videoAugMultiplier/ROTATE_NUM)
@@ -131,7 +131,10 @@ class DavisReader:
             labelName = self.davisDir + names[1]
             image = misc.imread(imageName)
             label = misc.imread(labelName) / 255
-            distLabel = self.data_distort(label)
+            if np.any(label):
+                distLabel = self.data_distort(label)
+            else:
+                distLabel = label
 
             print(names[0])
             # rotate
@@ -233,7 +236,11 @@ class DavisReader:
             labelName = self.davisDir + names[1]
             image = misc.imread(imageName)
             label = misc.imread(labelName) / 255
-            distLabel = self.data_distort(label)
+            if np.any(label):
+                distLabel = self.data_distort(label)
+            else:
+                distLabel = label
+
             if nthImage > 0:
                 tmp = epicflow.computeOpticalFlow(self.davisDir+self.trainNames[imageId-1].split()[0], imageName)
                 edge = tmp[:,:,0:1]
@@ -243,85 +250,98 @@ class DavisReader:
             # rotate
             angles = np.linspace(-90, 90, ROTATE_NUM)
             for rid in range(ROTATE_NUM):
+                angle = angles[rid]
                 imageR = self.rotateImage(angle, image)
                 labelR = self.rotateImage(angle, label)
                 distLabelR = self.rotateImage(angle, distLabel)
 
                 if nthImage == 0:
+                    # self.currentTrainImageSet = np.zeros((self.videoSize*2, image.shape[0], image.shape[1], 7))
+                    # self.currentTrainLabelSet = np.zeros((self.videoSize*2, image.shape[0], image.shape[1], NUM_CLASSES), 'uint8')
                     self.currentTrainImageSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], 7)))
-                    self.currentTrainLabelSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], NUM_CLASSES)))
+                    self.currentTrainLabelSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], NUM_CLASSES), 'uint8'))
 
 
                 idx = nthImage * rid * 8
                 # no flip
-                self.currentTrainImageSet[rid][idx,:,:,0:3] = imageRC
-                self.currentTrainImageSet[rid][idx,:,:,3] = distLabelRC[:,:,0]
-                self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                self.currentTrainImageSet[rid][idx,:,:,5:] = flow
-                self.currentTrainLabelSet[rid][idx,:,:,0] = 1-labelRC
-                self.currentTrainLabelSet[rid][idx,:,:,1] = labelRC
+                print(self.currentTrainImageSet[rid].shape)
+                print(imageR.shape)
+                self.currentTrainImageSet[rid][idx,:,:,0:3] = imageR
+                self.currentTrainImageSet[rid][idx,:,:,3] = distLabelR[:,:,0]
+                if nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                    self.currentTrainImageSet[rid][idx,:,:,5:] = flow
+                self.currentTrainLabelSet[rid][idx,:,:,0] = 1-labelR
+                self.currentTrainLabelSet[rid][idx,:,:,1] = labelR
                 idx += 1
 
-                self.currentTrainImageSet[rid][idx,:,:,0:3] = imageRC
-                self.currentTrainImageSet[rid][idx,:,:,3] = distLabelRC[:,:,1]
-                self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                self.currentTrainImageSet[rid][idx,:,:,5:] = flow
-                self.currentTrainLabelSet[rid][idx,:,:,0] = 1-labelRC
-                self.currentTrainLabelSet[rid][idx,:,:,1] = labelRC
+                self.currentTrainImageSet[rid][idx,:,:,0:3] = imageR
+                self.currentTrainImageSet[rid][idx,:,:,3] = distLabelR[:,:,1]
+                if nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                    self.currentTrainImageSet[rid][idx,:,:,5:] = flow
+                self.currentTrainLabelSet[rid][idx,:,:,0] = 1-labelR
+                self.currentTrainLabelSet[rid][idx,:,:,1] = labelR
                 idx += 1
 
 
                 # flip ud
-                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.flipud(imageRC)
-                self.currentTrainImageSet[rid][idx,:,:,3] = np.flipud(distLabelRC[:,:,0])
-                self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                self.currentTrainImageSet[rid][idx,:,:,5:] = flow
-                self.currentTrainLabelSet[rid][idx,:,:,0] = np.flipud(1-labelRC)
-                self.currentTrainLabelSet[rid][idx,:,:,1] = np.flipud(labelRC)
+                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.flipud(imageR)
+                self.currentTrainImageSet[rid][idx,:,:,3] = np.flipud(distLabelR[:,:,0])
+                if nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                    self.currentTrainImageSet[rid][idx,:,:,5:] = flow
+                self.currentTrainLabelSet[rid][idx,:,:,0] = np.flipud(1-labelR)
+                self.currentTrainLabelSet[rid][idx,:,:,1] = np.flipud(labelR)
                 idx += 1
 
-                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.flipud(imageRC)
-                self.currentTrainImageSet[rid][idx,:,:,3] = np.flipud(distLabelRC[:,:,1])
-                self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                self.currentTrainImageSet[rid][idx,:,:,5:] = flow
-                self.currentTrainLabelSet[rid][idx,:,:,0] = np.flipud(1-labelRC)
-                self.currentTrainLabelSet[rid][idx,:,:,1] = np.flipud(labelRC)
+                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.flipud(imageR)
+                self.currentTrainImageSet[rid][idx,:,:,3] = np.flipud(distLabelR[:,:,1])
+                if nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                    self.currentTrainImageSet[rid][idx,:,:,5:] = flow
+                self.currentTrainLabelSet[rid][idx,:,:,0] = np.flipud(1-labelR)
+                self.currentTrainLabelSet[rid][idx,:,:,1] = np.flipud(labelR)
                 idx += 1
 
 
                 # flip lr
-                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(imageRC)
-                self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(distLabelRC[:,:,0])
-                self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                self.currentTrainImageSet[rid][idx,:,:,5:] = flow
-                self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(1-labelRC)
-                self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(labelRC)
+                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(imageR)
+                self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(distLabelR[:,:,0])
+                if nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                    self.currentTrainImageSet[rid][idx,:,:,5:] = flow
+                self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(1-labelR)
+                self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(labelR)
                 idx += 1
 
-                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(imageRC)
-                self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(distLabelRC[:,:,1])
-                self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                self.currentTrainImageSet[rid][idx,:,:,5:] = flow
-                self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(1-labelRC)
-                self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(labelRC)
+                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(imageR)
+                self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(distLabelR[:,:,1])
+                if nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                    self.currentTrainImageSet[rid][idx,:,:,5:] = flow
+                self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(1-labelR)
+                self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(labelR)
                 idx += 1
 
 
                 # flip udlr
-                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(np.flipud(imageRC))
-                self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(np.flipud(distLabelRC[:,:,0]))
-                self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                self.currentTrainImageSet[rid][idx,:,:,5:] = flow
-                self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(np.flipud(1-labelRC))
-                self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(np.flipud(labelRC))
+                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(np.flipud(imageR))
+                self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(np.flipud(distLabelR[:,:,0]))
+                if nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                    self.currentTrainImageSet[rid][idx,:,:,5:] = flow
+                self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(np.flipud(1-labelR))
+                self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(np.flipud(labelR))
                 idx += 1
 
-                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(np.flipud(imageRC))
-                self.currentTrainLabelSet[rid][idx,:,:,3] = np.fliplr(np.flipud(distLabelRC[:,:,1]))
-                self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                self.currentTrainImageSet[rid][idx,:,:,5:] = flow
-                self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(np.flipud(1-labelRC))
-                self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(np.flipud(labelRC))
+                self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(np.flipud(imageR))
+                self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(np.flipud(distLabelR[:,:,1]))
+                if nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                    self.currentTrainImageSet[rid][idx,:,:,5:] = flow
+                self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(np.flipud(1-labelR))
+                self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(np.flipud(labelR))
                 idx += 1
 
             nthImage += 1
@@ -376,7 +396,8 @@ class DavisReader:
                 id += 1
                 break
 
-        return size
+        return 3
+        # return size
 
 
 
@@ -393,7 +414,7 @@ def showImageLabel(image, label):
 
 if __name__ == '__main__':
     print('test read davis')
-    reader = DavisReader()
+    reader = DavisReader(mode="video")
     import matplotlib.pyplot as plt
 
     for _ in range(1):
@@ -403,12 +424,12 @@ if __name__ == '__main__':
         print(labels.shape)
 
 
-        for i in range(1):
-            image = images[i,:,:,-1]
+        for i in range(10):
+            image = images[i,:,:,:3]
             label = labels[i,:,:,1]
             print(image.shape)
             # print (image.shape)
             misc.imsave('label.png', label*255)
-            misc.imsave('image.png', image*255)
-            #showImageLabel(image, label)
+            misc.imsave('image.png', image)
+            showImageLabel(image, label)
 

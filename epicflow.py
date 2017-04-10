@@ -10,6 +10,7 @@ import sys
 
 # import matlab engine
 sys.path.append( '/home/erhsin/lib' )
+sys.path.append( '/home/pychien/lib/lib' )
 import matlab.engine as mateng
 
 # return concatenated image with opticalflow information
