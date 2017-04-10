@@ -242,9 +242,11 @@ class DavisReader:
                 distLabel = label
 
             if nthImage > 0:
-                tmp = epicflow.computeOpticalFlow(self.davisDir+self.trainNames[imageId-1].split()[0], imageName)
-                edge = tmp[:,:,0:1]
-                flow = tmp[:,:,1:]
+                # tmp = epicflow.computeOpticalFlow(self.davisDir+self.trainNames[imageId-1].split()[0], imageName)
+                # edge = tmp[:,:,0:1]
+                # flow = tmp[:,:,1:]
+                edge = np.zeros((image.shape[0], image.shape[1], 1))
+                flow = np.zeros((image.shape[0], image.shape[1], 2))
 
             print(names[0])
             # rotate
@@ -397,8 +399,8 @@ class DavisReader:
                 id += 1
                 break
 
-        return 3
-        # return size
+        # return 3
+        return size
 
 
 
@@ -431,6 +433,8 @@ if __name__ == '__main__':
             print(image.shape)
             # print (image.shape)
             misc.imsave('label.png', label*255)
+            print('aaa')
             misc.imsave('image.png', image)
+            print('aaaaaa')
             showImageLabel(image, label)
 
