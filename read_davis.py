@@ -9,14 +9,14 @@ import epicflow
 
 class DavisReader:
 
-    def __init__(self, currentTrainImageId=0, currentTestImageId=0, mode="random"):
+    def __init__(self, currentTrainImageId=0, currentTestImageId=0, mode="random", trainListName='/ImageSets/480p/train.txt', testListName='/ImageSets/480p/val.txt'):
         self.davisDir = DATA_DIR
         print(self.davisDir)
-        trainListFileName = self.davisDir + '/ImageSets/480p/train.txt'
+        trainListFileName = self.davisDir + trainListName
         trainList = open(trainListFileName)
         self.trainNames = trainList.readlines()
 
-        testListFileName = self.davisDir + '/ImageSets/480p/val.txt'
+        testListFileName = self.davisDir + testListName
         testList = open(testListFileName)
         self.testNames = testList.readlines()
 
@@ -66,32 +66,65 @@ class DavisReader:
         # return retImages.tolist(), retLabels.tolist()
 
     def next_test(self):
-        names = self.testNames[self.currentTestImageId].split()
-        imageName = self.davisDir + names[0]
-        labelName = self.davisDir + names[1]
-        image = misc.imread(imageName)
-        label = misc.imread(labelName) / 255
-        self.currentTestImageId += 1
-
-        retImages = np.zeros((BATCH_SIZE,) + image.shape + np.array([0,0,0,1]))
-        retLabels = np.zeros((BATCH_SIZE,) + label.shape + (2,))
-        retImages[0,:,:,0:3] = image
-        retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
-        retLabels[0,:,:,0] = 1-label
-        retLabels[0,:,:,1] = label
-        for i in range(1,BATCH_SIZE):
+        if self.mode == 'random':
             names = self.testNames[self.currentTestImageId].split()
             imageName = self.davisDir + names[0]
             labelName = self.davisDir + names[1]
             image = misc.imread(imageName)
             label = misc.imread(labelName) / 255
+            self.currentTestImageId += 1
+
+            retImages = np.zeros((BATCH_SIZE,) + image.shape + np.array([0,0,0,1]))
+            retLabels = np.zeros((BATCH_SIZE,) + label.shape + (2,))
             retImages[0,:,:,0:3] = image
             retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
             retLabels[0,:,:,0] = 1-label
             retLabels[0,:,:,1] = label
+            for i in range(1,BATCH_SIZE):
+                names = self.testNames[self.currentTestImageId].split()
+                imageName = self.davisDir + names[0]
+                labelName = self.davisDir + names[1]
+                image = misc.imread(imageName)
+                label = misc.imread(labelName) / 255
+                retImages[i,:,:,0:3] = image
+                retImages[i,:,:,-1] = self.data_distort(label)[:,:,0]
+                retLabels[i,:,:,0] = 1-label
+                retLabels[i,:,:,1] = label
+                self.currentTestImageId += 1
+
+            return retImages, retLabels, names[0].split('/')[-1]
+
+        elif self.mode == 'video':
+            self.videoSize = self.findVideoSize(self.testNames, self.currentTestImageId)
+            names = self.testNames[self.currentTestImageId].split()
+            imageName = self.davisDir + names[0]
+            labelName = self.davisDir + names[1]
+            image = misc.imread(imageName)
+            label = misc.imread(labelName) / 255
             self.currentTestImageId += 1
 
-        return retImages, retLabels, names[0].split('/')[-1]
+            retImages = np.zeros((self.videoSize,) + image.shape + np.array([0,0,0,1]))
+            retLabels = np.zeros((self.videoSize,) + label.shape + (2,))
+            retImages[0,:,:,0:3] = image
+            # retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
+            retImages[0,:,:,-1] = label
+            retLabels[0,:,:,0] = 1-label
+            retLabels[0,:,:,1] = label
+            for i in range(1,self.videoSize):
+                names = self.testNames[self.currentTestImageId].split()
+                imageName = self.davisDir + names[0]
+                labelName = self.davisDir + names[1]
+                # print(imageName)
+                image = misc.imread(imageName)
+                label = misc.imread(labelName) / 255
+                retImages[i,:,:,0:3] = image
+                retImages[i,:,:,-1] = label
+                # retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
+                retLabels[i,:,:,0] = 1-label
+                retLabels[i,:,:,1] = label
+                self.currentTestImageId += 1
+
+            return retImages, retLabels #, names[0].split('/')[-1]
 
     def augmentData(self):
         # reset image set id and check training data
@@ -136,7 +169,7 @@ class DavisReader:
             else:
                 distLabel = label
 
-            print(names[0])
+            # print(names[0])
             # rotate
             for angle in np.linspace(-90, 90, ROTATE_NUM):
                 imageR, scale = self.rotateImage(angle, image)
@@ -248,7 +281,7 @@ class DavisReader:
                 # edge = np.zeros((image.shape[0], image.shape[1], 1))
                 # flow = np.zeros((image.shape[0], image.shape[1], 2))
 
-            print(names[0])
+            # print(names[0])
             # rotate
             angles = np.linspace(-90, 90, ROTATE_NUM)
             for rid in range(ROTATE_NUM):
@@ -266,8 +299,8 @@ class DavisReader:
 
                 idx = nthImage * 8
                 # no flip
-                print(self.currentTrainImageSet[rid].shape)
-                print(imageR.shape)
+                # print(self.currentTrainImageSet[rid].shape)
+                # print(imageR.shape)
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = imageR
                 self.currentTrainImageSet[rid][idx,:,:,3] = distLabelR[:,:,0]
                 if nthImage > 0:
@@ -421,8 +454,8 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     for _ in range(1):
-        # images, labels = reader.next_test()
-        images, labels = reader.next_batch()
+        images, labels = reader.next_test()
+        # images, labels = reader.next_batch()
         print(images.shape)
         print(labels.shape)
 
