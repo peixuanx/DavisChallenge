@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 # import matplotlib.pyplot as plt
 import Data_Distor
-import epicflow
+#import epicflow
 
 class DavisReader:
 
@@ -278,7 +278,10 @@ class DavisReader:
                 distLabel = label
 
             if nthImage > 0:
-                tmp = epicflow.computeOpticalFlow(self.davisDir+self.trainNames[imageId-1].split()[0], imageName)
+                try:
+                    tmp = epicflow.computeOpticalFlow(self.davisDir+self.trainNames[imageId-1].split()[0], imageName)
+                except:
+                    print("David Not Imported")
                 edge = tmp[:,:,0:1]
                 flow = tmp[:,:,1:]
                 # edge = np.zeros((image.shape[0], image.shape[1], 1))
@@ -308,7 +311,10 @@ class DavisReader:
                 self.currentTrainImageSet[rid][idx,:,:,3] = distLabelR[:,:,0]
                 if nthImage > 0:
                     self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                    self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 0)
+                    try:
+                        self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 0)
+                    except:
+                        print("David Not Imported")
                 self.currentTrainLabelSet[rid][idx,:,:,0] = 1-labelR
                 self.currentTrainLabelSet[rid][idx,:,:,1] = labelR
                 idx += 1
@@ -317,7 +323,10 @@ class DavisReader:
                 self.currentTrainImageSet[rid][idx,:,:,3] = distLabelR[:,:,1]
                 if nthImage > 0:
                     self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                    self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 0)
+                    try:
+                        self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 0)
+                    except:
+                        print("David Not Imported")
                 self.currentTrainLabelSet[rid][idx,:,:,0] = 1-labelR
                 self.currentTrainLabelSet[rid][idx,:,:,1] = labelR
                 idx += 1
@@ -328,7 +337,10 @@ class DavisReader:
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.flipud(distLabelR[:,:,0])
                 if nthImage > 0:
                     self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                    self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 1)
+                    try:
+                        self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 1)
+                    except:
+                        print("David Not Imported")
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.flipud(1-labelR)
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.flipud(labelR)
                 idx += 1
@@ -337,7 +349,10 @@ class DavisReader:
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.flipud(distLabelR[:,:,1])
                 if nthImage > 0:
                     self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                    self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 1)
+                    try:
+                        self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 1)
+                    except:
+                        print("David Not Imported")
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.flipud(1-labelR)
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.flipud(labelR)
                 idx += 1
@@ -348,7 +363,10 @@ class DavisReader:
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(distLabelR[:,:,0])
                 if nthImage > 0:
                     self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                    self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 2)
+                    try:
+                        self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 2)
+                    except:
+                        print("David Not Imported")
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(1-labelR)
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(labelR)
                 idx += 1
@@ -357,7 +375,10 @@ class DavisReader:
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(distLabelR[:,:,1])
                 if nthImage > 0:
                     self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                    self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 2)
+                    try:
+                        self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 2)
+                    except:
+                        print("David Not Imported")
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(1-labelR)
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(labelR)
                 idx += 1
@@ -368,7 +389,10 @@ class DavisReader:
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(np.flipud(distLabelR[:,:,0]))
                 if nthImage > 0:
                     self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                    self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 3)
+                    try:
+                        self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 3)
+                    except:
+                        print("David Not Imported")
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(np.flipud(1-labelR))
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(np.flipud(labelR))
                 idx += 1
@@ -377,7 +401,10 @@ class DavisReader:
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(np.flipud(distLabelR[:,:,1]))
                 if nthImage > 0:
                     self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
-                    self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 3)
+                    try:
+                        self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 3)
+                    except:
+                        print("David Not Imported")
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(np.flipud(1-labelR))
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(np.flipud(labelR))
                 idx += 1
