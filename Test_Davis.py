@@ -26,7 +26,7 @@ def onlineTraining():
     f = open('./file_index', 'a+')
     
     # import data
-    davis_reader = read_davis.DavisReader()
+    davis_reader = read_davis.DavisReader(mode='video')
     
     # Create the model
     fcn = Davis_FCN.FCN() 
@@ -34,7 +34,7 @@ def onlineTraining():
     y_ = tf.placeholder(tf.float32)
     y = fcn.build(x, train=True, num_classes=NUM_CLASSES, debug=True)
 
-	# Define loss and optimizer
+    # Define loss and optimizer
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y))
     #train_step = tf.train.GradientDescentOptimizer(LR).minimize(cross_entropy)
