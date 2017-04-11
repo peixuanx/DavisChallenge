@@ -109,8 +109,8 @@ class DavisReader:
             retImages = np.zeros((self.videoSize,) + image.shape + np.array([0,0,0,1]))
             retLabels = np.zeros((self.videoSize,) + label.shape + (2,))
             retImages[0,:,:,0:3] = image
-            # retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
-            retImages[0,:,:,-1] = label
+            retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
+            # retImages[0,:,:,-1] = label
             retLabels[0,:,:,0] = 1-label
             retLabels[0,:,:,1] = label
             for i in range(1,self.videoSize):
@@ -121,7 +121,7 @@ class DavisReader:
                 image = misc.imread(imageName)
                 label = misc.imread(labelName) / 255
                 retImages[i,:,:,0:3] = image
-                retImages[i,:,:,-1] = label
+                # retImages[i,:,:,-1] = label
                 # retImages[0,:,:,-1] = self.data_distort(label)[:,:,0]
                 retLabels[i,:,:,0] = 1-label
                 retLabels[i,:,:,1] = label
