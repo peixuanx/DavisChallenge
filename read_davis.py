@@ -30,7 +30,7 @@ class DavisReader:
         self.videoAugMultiplier = ROTATE_NUM * 4 * 2 # 4 for flip, 2 for mask distortion
 
         self.mode = mode
-        self.videoId = 0
+        self.videoId = currentTrainImageId
         self.videoSize = 0
 
     def next_batch(self):
