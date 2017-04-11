@@ -3,7 +3,7 @@ from scipy import ndimage
 from config import *
 import numpy as np
 from PIL import Image
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import Data_Distor
 import epicflow
 
@@ -30,8 +30,11 @@ class DavisReader:
         self.videoAugMultiplier = ROTATE_NUM * 4 * 2 # 4 for flip, 2 for mask distortion
 
         self.mode = mode
-        self.videoId = currentTrainImageId
+        self.videoId = 0
         self.videoSize = 0
+        for _ in range(currentTrainImageId):
+            self.videoSize = self.findVideoSize(self.trainNames, self.videoId)
+            self.videoId += self.videoSize
 
     def next_batch(self):
         if self.mode == "random":
@@ -442,16 +445,17 @@ def read_list():
 
 
 def showImageLabel(image, label):
-    plt.subplot(121)
-    plt.imshow(image)
-    plt.subplot(122)
-    plt.imshow(label)
-    plt.show()
+    # plt.subplot(121)
+    # plt.imshow(image)
+    # plt.subplot(122)
+    # plt.imshow(label)
+    # plt.show()
+    pass
 
 if __name__ == '__main__':
     print('test read davis')
     reader = DavisReader(mode="video")
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
 
     for _ in range(1):
         images, labels = reader.next_test()
@@ -469,5 +473,5 @@ if __name__ == '__main__':
             print('aaa')
             misc.imsave('image.png', image)
             print('aaaaaa')
-            showImageLabel(image, label)
+            # showImageLabel(image, label)
 
