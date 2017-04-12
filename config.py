@@ -21,7 +21,7 @@ NUM_CLASSES = 2
 WEIGHT_DECAY = 5e-4
 
 # maximum iteration number
-MAX_ITER = 5000
+MAX_ITER = 100
 
 # learning rate
 LR = 1e-11
@@ -35,11 +35,11 @@ WIDTH = 0
 
 
 # reader
-ROTATE_NUM = 5
-CROP_WIDTH = 200
-CROP_HEIGHT = 200
-CROP_WIDTH_NUM = 5
-CROP_HEIGHT_NUM = 5
+ROTATE_NUM = 1
+CROP_WIDTH = 854
+CROP_HEIGHT = 480
+CROP_WIDTH_NUM = 1
+CROP_HEIGHT_NUM = 1
 
 # matlab directory
 MATLAB_PATH = './matlab/'

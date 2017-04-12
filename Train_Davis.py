@@ -26,14 +26,14 @@ def main(argv):
     f = open('./file_index', 'a+')
     '''
     # import data
-    davis_reader = read_davis.DavisReader()
+    davis_reader = read_davis.DavisReader(trainListName='/ImageSets/train.txt', testListName='/ImageSets/val.txt')
     
     # Create the model
     fcn = Davis_FCN.FCN() 
     x = tf.placeholder(tf.float32)#, shape=[BATCH_SIZE, None, None, 4]) 
     y_ = tf.placeholder(tf.float32)#, shape=[BATCH_SIZE, None, None, NUM_CLASSES])
     y = fcn.build(x, train=True, num_classes=NUM_CLASSES, 
-                random_init_fc8=True, debug=True)
+                random_init_fc8=False, debug=True)
 
 	# imbalanced weighted
     pixels = tf.reduce_sum(y_, [1,2])

@@ -10,6 +10,7 @@ class Data_Distor:
         self.affineMasks = [image, image]
         self.masks = np.zeros(image.shape+(3,))
         # Original mask parameters
+        #print(image.shape)
         y,x = image.nonzero()
         self.bbox = [min(x),max(x),min(y),max(y)]
         self.height = self.bbox[3]-self.bbox[2]

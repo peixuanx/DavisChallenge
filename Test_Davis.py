@@ -89,7 +89,7 @@ def onlineTraining(argv):
 def main(argv):
 	
     # import data
-    davis_reader = read_davis.DavisReader()
+    davis_reader = read_davis.DavisReader(trainListName='/ImageSets/train.txt', testListName='/ImageSets/val.txt')
 
     # Create the model
     fcn = Davis_FCN.FCN()
@@ -135,4 +135,4 @@ def main(argv):
 if __name__=='__main__':
     if not os.path.exists('./test%s'%MODEL_INDEX):
         os.makedirs('./test%s'%MODEL_INDEX)
-    tf.app.run(main=onlineTraining, argv=[])
+    tf.app.run(main=main, argv=[])
