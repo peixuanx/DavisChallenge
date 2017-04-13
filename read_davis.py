@@ -51,7 +51,7 @@ class DavisReader:
 
             return retImages, retLabels
 
-        elif self.mode == "video":
+        elif self.mode == "video" or self.mode == "epic":
             if self.currentTrainImageSet is None:
                 self.videoSize = self.findVideoSize(self.trainNames, self.videoId)
                 self.VideoAugmentData()
@@ -97,7 +97,7 @@ class DavisReader:
 
             return retImages, retLabels, names[0].split('/')[-1]
 
-        elif self.mode == 'video':
+        elif self.mode == 'video' or self.mode == "epic":
             self.videoSize = self.findVideoSize(self.testNames, self.currentTestImageId)
             names = self.testNames[self.currentTestImageId].split()
             imageName = self.davisDir + names[0]
@@ -277,9 +277,12 @@ class DavisReader:
             else:
                 distLabel = label
 
-            if nthImage > 0:
+            if self.mode == "epic" and nthImage > 0:
                 tmp = epicflow.computeOpticalFlow(self.davisDir+self.trainNames[imageId-1].split()[0], imageName)
+                # tmp = np.zeros(image.shape)
+                # print(tmp.shape)
                 edge = tmp[:,:,0:1]
+                # print(edge.shape)
                 flow = tmp[:,:,1:]
                 # edge = np.zeros((image.shape[0], image.shape[1], 1))
                 # flow = np.zeros((image.shape[0], image.shape[1], 2))
@@ -291,13 +294,19 @@ class DavisReader:
                 angle = angles[rid]
                 imageR, scale = self.rotateImage(angle, image)
                 labelR, scale = self.rotateImage(angle, label)
+                if self.mode == "epic" and nthImage > 0:
+                    edgeR, scale = self.rotateImage(angle, edge)
                 distLabelR, scale = self.rotateImage(angle, distLabel)
 
-                if nthImage == 0:
+                if  nthImage == 0:
                     # self.currentTrainImageSet = np.zeros((self.videoSize*2, image.shape[0], image.shape[1], 7))
                     # self.currentTrainLabelSet = np.zeros((self.videoSize*2, image.shape[0], image.shape[1], NUM_CLASSES), 'uint8')
-                    self.currentTrainImageSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], 7)))
-                    self.currentTrainLabelSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], NUM_CLASSES), 'uint8'))
+                    if self.mode == "video":
+                        self.currentTrainImageSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], 4)))
+                        self.currentTrainLabelSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], NUM_CLASSES), 'uint8'))
+                    elif self.mode == "epic":
+                        self.currentTrainImageSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], 7)))
+                        self.currentTrainLabelSet.append(np.zeros((self.videoSize*self.videoAugMultiplier/ROTATE_NUM, image.shape[0], image.shape[1], NUM_CLASSES), 'uint8'))
 
 
                 idx = nthImage * 8
@@ -306,8 +315,8 @@ class DavisReader:
                 # print(imageR.shape)
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = imageR
                 self.currentTrainImageSet[rid][idx,:,:,3] = distLabelR[:,:,0]
-                if nthImage > 0:
-                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                if self.mode == "epic" and nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edgeR
                     self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 0)
                 self.currentTrainLabelSet[rid][idx,:,:,0] = 1-labelR
                 self.currentTrainLabelSet[rid][idx,:,:,1] = labelR
@@ -315,8 +324,8 @@ class DavisReader:
 
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = imageR
                 self.currentTrainImageSet[rid][idx,:,:,3] = distLabelR[:,:,1]
-                if nthImage > 0:
-                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                if self.mode == "epic" and nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edgeR
                     self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 0)
                 self.currentTrainLabelSet[rid][idx,:,:,0] = 1-labelR
                 self.currentTrainLabelSet[rid][idx,:,:,1] = labelR
@@ -326,8 +335,8 @@ class DavisReader:
                 # flip ud
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = np.flipud(imageR)
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.flipud(distLabelR[:,:,0])
-                if nthImage > 0:
-                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                if self.mode == "epic" and nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = np.flipud(edgeR)
                     self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 1)
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.flipud(1-labelR)
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.flipud(labelR)
@@ -335,8 +344,8 @@ class DavisReader:
 
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = np.flipud(imageR)
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.flipud(distLabelR[:,:,1])
-                if nthImage > 0:
-                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                if self.mode == "epic" and nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = np.flipud(edgeR)
                     self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 1)
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.flipud(1-labelR)
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.flipud(labelR)
@@ -346,8 +355,8 @@ class DavisReader:
                 # flip lr
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(imageR)
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(distLabelR[:,:,0])
-                if nthImage > 0:
-                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                if self.mode == "epic" and nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = np.fliplr(edgeR)
                     self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 2)
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(1-labelR)
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(labelR)
@@ -355,8 +364,8 @@ class DavisReader:
 
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(imageR)
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(distLabelR[:,:,1])
-                if nthImage > 0:
-                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                if self.mode == "epic" and nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = np.fliplr(edgeR)
                     self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 2)
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(1-labelR)
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(labelR)
@@ -366,8 +375,8 @@ class DavisReader:
                 # flip udlr
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(np.flipud(imageR))
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(np.flipud(distLabelR[:,:,0]))
-                if nthImage > 0:
-                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                if self.mode == "epic" and nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = np.fliplr(np.flipud(edgeR))
                     self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 3)
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(np.flipud(1-labelR))
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(np.flipud(labelR))
@@ -375,8 +384,8 @@ class DavisReader:
 
                 self.currentTrainImageSet[rid][idx,:,:,0:3] = np.fliplr(np.flipud(imageR))
                 self.currentTrainImageSet[rid][idx,:,:,3] = np.fliplr(np.flipud(distLabelR[:,:,1]))
-                if nthImage > 0:
-                    self.currentTrainImageSet[rid][idx,:,:,4:5] = edge
+                if self.mode == "epic" and nthImage > 0:
+                    self.currentTrainImageSet[rid][idx,:,:,4:5] = np.fliplr(np.flipud(edgeR))
                     self.currentTrainImageSet[rid][idx,:,:,5:] = epicflow.affine(flow, angle, scale, 3)
                 self.currentTrainLabelSet[rid][idx,:,:,0] = np.fliplr(np.flipud(1-labelR))
                 self.currentTrainLabelSet[rid][idx,:,:,1] = np.fliplr(np.flipud(labelR))
@@ -435,8 +444,8 @@ class DavisReader:
                 id += 1
                 break
 
-        # return 3
-        return size
+        return 3
+        # return size
 
 
 
@@ -454,12 +463,12 @@ def showImageLabel(image, label):
 
 if __name__ == '__main__':
     print('test read davis')
-    reader = DavisReader(mode="video")
+    reader = DavisReader(mode="epic")
     # import matplotlib.pyplot as plt
 
     for _ in range(1):
-        images, labels = reader.next_test()
-        # images, labels = reader.next_batch()
+        # images, labels = reader.next_test()
+        images, labels = reader.next_batch()
         print(images.shape)
         print(labels.shape)
 
@@ -470,8 +479,8 @@ if __name__ == '__main__':
             print(image.shape)
             # print (image.shape)
             misc.imsave('label.png', label*255)
-            print('aaa')
+            # print('aaa')
             misc.imsave('image.png', image)
-            print('aaaaaa')
+            # print('aaaaaa')
             # showImageLabel(image, label)
 
