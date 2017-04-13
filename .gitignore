@@ -1,6 +1,7 @@
 resource/*
 image/*
 models/*
+models_RNN/*
 dataset/*
 reference/*
 flux/*

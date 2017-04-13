@@ -6,7 +6,7 @@ IMAGE_SIZE = 424
 DIM = IMAGE_SIZE*IMAGE_SIZE
 '''
 # model index
-MODEL_INDEX = 1
+MODEL_INDEX = 11
 
 # data directory
 DATA_DIR = './dataset/DAVIS'
@@ -43,3 +43,6 @@ CROP_HEIGHT_NUM = 1
 
 # matlab directory
 MATLAB_PATH = './matlab/'
+
+#
+SEQ = 0

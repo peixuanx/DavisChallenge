@@ -17,7 +17,6 @@ from config import *
 def main(argv):
     
     # read current file index
-    '''
     file_index = 0
     if os.path.exists('./file_index'):
         f = open('./file_index')
@@ -25,16 +24,16 @@ def main(argv):
             file_index = int(line)
         f.close()
     f = open('./file_index', 'a+')
-    '''
+
     # import data
-    davis_reader = read_davis.DavisReader()
+    davis_reader = read_davis.DavisReader(mode='epic')
     
     # Create the model
     fcn = Davis_Epic.FCN() 
     x = tf.placeholder(tf.float32)#, shape=[BATCH_SIZE, None, None, 4]) 
     y_ = tf.placeholder(tf.float32)#, shape=[BATCH_SIZE, None, None, NUM_CLASSES])
     y = fcn.build(x, train=True, num_classes=NUM_CLASSES, 
-                random_init_fc8=True, debug=True)
+                    random_init_fc8=True, debug=True)
 
     # imbalanced weighted
     pixels = tf.reduce_sum(y_, [1,2])
@@ -57,34 +56,40 @@ def main(argv):
     sess.run(init)
     
     saver = tf.train.Saver()
-    if not os.path.exists('models'):
-         os.makedirs('models')
+    if not os.path.exists('models_RNN'):
+         os.makedirs('models_RNN')
     else:
-        saver.restore(sess, "./models/model%s"%str(MODEL_INDEX-1))
-        print("Model%s restored ..."%str(MODEL_INDEX-1))
+        saver.restore(sess, "./models_RNN/model%s"%str(MODEL_INDEX))
+        print("RNN Model%s restored ..."%str(MODEL_INDEX))
     
     # Training
     print('='*40)
     print('Training ...')
     loss = []
+
+    # Main Loop
     for i in range(MAX_ITER):
         batch_xs, batch_ys = davis_reader.next_batch()
         entropy = 0
-        _, loss_val = sess.run([train_step,cross_entropy], 
-                                feed_dict={x: batch_xs, y_: batch_ys})
-        loss.append(loss_val)
+        for n in range(davis_reader.videoSize):
+            xs[0] = batch_xs[n]
+            ys[0]=batch_ys[n]
+            SEQ = n
+            _, loss_val = sess.run([train_step,cross_entropy], 
+                                        feed_dict={x:xs, y_:ys})
+            loss.append(loss_val)
         if i%100==0:
-            save_path = saver.save(sess, "./models/model%s"%MODEL_INDEX)      
-            #f.write(str(file_index+i+1)+'\n')
+            save_path = saver.save(sess, "./models_RNN/model%s"%MODEL_INDEX)      
+
+        # f.write(str(file_index+i+1)+'\n')
         log = 'Iteration: %s'%str(i) + \
                 ' | Model saved in file: %s'%save_path + ' | Cross entropy loss: %s'%str(loss_val) 
         print(log)
+
     #f.close()
-    np.save('./models/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
+    np.save('./models_RNN/trCrossEntropyLoss%s'%MODEL_INDEX, np.array(loss))
 
 
 if __name__=='__main__':
     tf.app.run(main=main, argv=[])
-
-
 

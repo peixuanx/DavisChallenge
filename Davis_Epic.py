@@ -37,18 +37,19 @@ class FCN:
         self.srnn = SRNN()
         print("npy file loaded")
 
-    def build(self, rgb, train=False, num_classes=20, random_init_fc8=False,
+    def build(self, rgb_rnn, train=False, num_classes=20, random_init_fc8=False,
                debug=False):
 
         # Convert RGB to BGR
-        tf.Print(rgb, [tf.shape(rgb_rnn)],
+        tf.Print(rgb_rnn, [tf.shape(rgb_rnn)],
                       message='Shape of input rgbimage: ',
                       summarize=4, first_n=1)
 
         # Split to two inputs
         with tf.name_scope('Processing'):
             r, g, b, m, o1, o2, o3 = tf.split(rgb_rnn, 7, 3)
-            bgr = tf.concat([   b-VGG_MEAN[0],
+            self.bgr = tf.concat([   
+                                b-VGG_MEAN[0],
                                 g-VGG_MEAN[1],
                                 r-VGG_MEAN[2],
                                 m], axis=3) 
@@ -58,16 +59,10 @@ class FCN:
                                 m, o1, o2, o3], axis=3) 
 
         # process to SRNN
-        bgro_rnn = self.srnn.inference(bgro, 512)
-
-        # Convert RGB to BGR
-        tf.Print(rgb, [tf.shape(rgb)],
-                      message='Shape of input rgbimage: ',
-                      summarize=4, first_n=1)
-
-        out1 = self.build1(self, bgr, prefix='', train=False, num_classes=20, random_init_fc8=False,
-        out2 = self.build1(self, bgro_rnn, prefix='rnn_', train=False, num_classes=20, random_init_fc8=False,
-        out  = self.build2(self, out1, out2, train=False, num_classes=20, random_init_fc8=False,
+        bgro_rnn = self.srnn.inference(bgro, 512, SEQ)
+       
+        out1 = self.build1(self.bgr, prefix='', train=False, num_classes=20, random_init_fc8=False)
+        out  = self.build2(out1, bgro_rnn, train=False, num_classes=20, random_init_fc8=False)
     
         return out
 
@@ -91,42 +86,46 @@ class FCN:
         """
 
         conv1_1 = self._conv_layer(bgr, "%sconv1_1"%prefix)
-        conv1_2 = self._conv_layer(self.conv1_1, "%sconv1_2"%prefix)
-        pool1 = self._max_pool(self.conv1_2, '%spool1'%prefix, debug)
+        conv1_2 = self._conv_layer(conv1_1, "%sconv1_2"%prefix)
+        pool1 = self._max_pool(conv1_2, '%spool1'%prefix, debug)
 
-        conv2_1 = self._conv_layer(self.pool1, "%sconv2_1"%prefix)
-        conv2_2 = self._conv_layer(self.conv2_1, "%sconv2_2"%prefix)
-        pool2 = self._max_pool(self.conv2_2, '%spool2'%prefix, debug)
+        conv2_1 = self._conv_layer(pool1, "%sconv2_1"%prefix)
+        conv2_2 = self._conv_layer(conv2_1, "%sconv2_2"%prefix)
+        pool2 = self._max_pool(conv2_2, '%spool2'%prefix, debug)
 
-        conv3_1 = self._conv_layer(self.pool2, "%sconv3_1"%prefix)
-        conv3_2 = self._conv_layer(self.conv3_1, "%sconv3_2"%prefix)
-        conv3_3 = self._conv_layer(self.conv3_2, "%sconv3_3"%prefix)
-        pool3 = self._max_pool(self.conv3_3, '%spool3'%prefix, debug)
+        conv3_1 = self._conv_layer(pool2, "%sconv3_1"%prefix)
+        conv3_2 = self._conv_layer(conv3_1, "%sconv3_2"%prefix)
+        conv3_3 = self._conv_layer(conv3_2, "%sconv3_3"%prefix)
+        pool3 = self._max_pool(conv3_3, '%spool3'%prefix, debug)
 
-        conv4_1 = self._conv_layer(self.pool3, "%sconv4_1"%prefix)
-        conv4_2 = self._conv_layer(self.conv4_1, "%sconv4_2"%prefix)
-        conv4_3 = self._conv_layer(self.conv4_2, "%sconv4_3"%prefix)
-        pool4 = self._max_pool(self.conv4_3, '%spool4'%prefix, debug)
+        conv4_1 = self._conv_layer(pool3, "%sconv4_1"%prefix)
+        conv4_2 = self._conv_layer(conv4_1, "%sconv4_2"%prefix)
+        conv4_3 = self._conv_layer(conv4_2, "%sconv4_3"%prefix)
+        pool4 = self._max_pool(conv4_3, '%spool4'%prefix, debug)
         
         if len(prefix)==0:
             self.pool4 = pool4
 
-        conv5_1 = self._conv_layer(self.pool4, "%sconv5_1"%prefix)
-        conv5_2 = self._conv_layer(self.conv5_1, "%sconv5_2"%prefix)
+        conv5_1 = self._conv_layer(pool4, "%sconv5_1"%prefix)
+        conv5_2 = self._conv_layer(conv5_1, "%sconv5_2"%prefix)
 
-        conv5_3 = self._conv_layer(self.conv5_2, "%sconv5_3"%prefix)
-        pool5 = self._max_pool(self.conv5_3, '%spool5'%prefix, debug)
+        conv5_3 = self._conv_layer(conv5_2, "%sconv5_3"%prefix)
+        pool5 = self._max_pool(conv5_3, '%spool5'%prefix, debug)
         
         return pool5
 
     def build2(self, in1, in2, train=False, num_classes=20, random_init_fc8=False,
                debug=False):
 
-        hyper_tensor = tf.concat([in1, in2], axis=3)
-        # TODO: extra layer design to digest the fucking temporal information
-        self.extra = self._fc_layer(self.hyper_tensor, "extra")
+        in2 = self._upscore_layer(tf.reshape(in2, [1,1,1,512]),
+                                  shape=tf.shape(in1),
+                                  num_classes=num_classes,
+                                  debug=debug, name='upscore_extra',
+                                  ksize=4, stride=2)
 
-        self.fc6 = self._fc_layer(self.hyper_tensor, "fc6")
+        hyper_tensor = tf.concat([in1, in2], axis=3)
+
+        self.fc6 = self._fc_layer(hyper_tensor, "fc6")
 
         if train:
             self.fc6 = tf.nn.dropout(self.fc6, 0.5)
@@ -157,7 +156,7 @@ class FCN:
         self.fuse_pool4 = tf.add(self.upscore2, self.score_pool4)
 
         self.upscore32 = self._upscore_layer(self.fuse_pool4,
-                                             shape=tf.shape(bgr),
+                                             shape=tf.shape(self.bgr),
                                              num_classes=num_classes,
                                              debug=debug, name='upscore32',
                                              ksize=32, stride=16)
@@ -194,7 +193,9 @@ class FCN:
         with tf.variable_scope(name) as scope:
             shape = bottom.get_shape().as_list()
 
-            if name == 'fc6' or 'extra':
+            if name == 'extra':
+                filt = self.get_fc_weight_reshape('fc6', [14, 14, 512, 4096])
+            if name == 'fc6':
                 filt = self.get_fc_weight_reshape(name, [7, 7, 512, 4096])
             elif name == 'score_fr':
                 name = 'fc8'  # Name of score_fr layer in VGG Model
@@ -297,14 +298,15 @@ class FCN:
 
     def get_conv_filter(self, name):
         pre = ''
-        if name[0:4] = "rnn_":
+        if name[0:4] == "rnn_":
             pre = name[0:4]
             name = name[4:]
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
         if len(pre)>0:
-            shape[3] = shape[3]*2
+            shape = list(shape)
+            shape[3] *= 2
         var = tf.get_variable(name="filter", initializer=init, shape=shape)
         if name == 'conv1_1':
             init_mask = tf.truncated_normal_initializer(stddev=5e-2, 
