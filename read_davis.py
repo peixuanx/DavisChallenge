@@ -469,8 +469,8 @@ class DavisReader:
                 id += 1
                 break
 
-        return 3
-        # return size
+        # return 3
+        return size
 
 
 
