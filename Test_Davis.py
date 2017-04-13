@@ -32,7 +32,7 @@ def onlineTraining(argv):
     fcn = Davis_FCN.FCN() 
     x = tf.placeholder(tf.float32) #shape=[batch size, dimemsionality] 
     y_ = tf.placeholder(tf.float32)
-    y = fcn.build(x, train=True, num_classes=NUM_CLASSES, debug=True)
+    y = fcn.build(x, num_classes=NUM_CLASSES, debug=True)
 
     # Define loss and optimizer
     cross_entropy = tf.reduce_mean(
