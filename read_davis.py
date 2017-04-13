@@ -256,7 +256,7 @@ class DavisReader:
     def VideoAugmentData(self):
         # reset image set id and check training data
         # print(len(self.trainNames))
-        imageIdList = range(self.videoId+70, self.videoId+self.videoSize)
+        imageIdList = range(self.videoId, self.videoId+self.videoSize)
         self.videoId += self.videoSize
         self.trainImageSetUsedTime = 0
         self.currentTrainImageSet = []
@@ -272,7 +272,7 @@ class DavisReader:
             labelName = self.davisDir + names[1]
             image = misc.imread(imageName)
             label = misc.imread(labelName) / 255
-            #print(labelName)
+            print(labelName)
             #print(label.shape)
             if np.any(label):
                 distLabel = self.data_distort(label)
